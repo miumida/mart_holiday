@@ -30,6 +30,22 @@ sensor:
       mart_code: '0017'
 ```
 <br><br>
+### 기본 설정값
+
+|옵션|값|
+|--|--|
+|platform| (필수) martholiday |
+|marts| (필수) 센서로 등록할 마트 정보를 추가 |
+
+### 센서별 설정값
+
+|옵션|값|
+|--|--|
+|mart_kind| (필수) 마트 종류 |
+|name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨 |
+|mart_code| (필수) 마트 지점코드 or 마트 지점ID |
+|area| (필수) E마트only. mart는 area코드를 가지고  |
+
 ### 마트 종류 (mart_kind) 옵션
 
 |종류|설명|
