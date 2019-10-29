@@ -13,7 +13,7 @@ E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sen
 <br><br>
 ## Usage
 ### configuration
-- HA 설정에 Local Weather RSS sensor를 추가합니다.<br>
+- HA 설정에 대형마트 휴무일 sensor를 추가합니다.<br>
 ```yaml
 sensor:
 - platform: martholiday
@@ -30,3 +30,10 @@ sensor:
       mart_code: '0017'
 ```
 <br><br>
+### 마트 종류 (mart_kind) 옵션
+
+|종류|설명|
+|--|--|
+|e|E마트|
+|l|롯데마트|
+|h|Homeplus|
