@@ -74,6 +74,7 @@ sensor:
 
 
 #### 롯데마트
+http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001
 
 #### Homeplus
 
