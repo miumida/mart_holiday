@@ -1,0 +1,10 @@
+{
+  "domain": "martholiday",
+  "name": "martholiday",
+  "documentation": "https://github.com/miumida/martholiday",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": [
+    "@miumida"
+  ]
+}
