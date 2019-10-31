@@ -1,6 +1,7 @@
 # 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor
 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor for Home Assistant<br>
 E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
+롯데마트의 경우, 지점 담당자가 휴무일을 제대로 입력하지 않거나 갱신하지 않아 제대로 조회되지 않는 경우도 있습니다.<br>
 ![screenshot_1](https://github.com/miumida/martholiday/blob/master/Screenshot1.png)<br>
 
 ![screenshot_e](https://github.com/miumida/martholiday/blob/master/Screenshot_e.png)<br>
@@ -86,6 +87,6 @@ sensor:
 - 홈플러스 매장명 찾기를 통해 원하는 홈플러스 매장을 검색한다<br>
   매장명 검색 페이지 :  http://corporate.homeplus.co.kr/STORE/HyperMarket.aspx
   ![homeplus_search_1](https://github.com/miumida/martholiday/blob/master/img/homeplus_search_1.png)<br>
-- 조회된 목록에서 우너하는 매장의 '입점 정보'를 클릭한다.
+- 조회된 목록에서 하는 매장의 '입점 정보'를 클릭한다.
 - 매장정보가 나타나면 주소창에 있는 sn=0017 부분에서 = 뒤에 있는 `0017`을 마트코드로 사용한다.
 ![homeplus_search_2](https://github.com/miumida/martholiday/blob/master/img/homeplus_search_2.png)<br>
