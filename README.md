@@ -81,5 +81,9 @@ sensor:
 ![lotte_search_2](https://github.com/miumida/martholiday/blob/master/img/lotte_search_2.png)<br>
 - 지점사이트가 열리면 주소창에 마지막 부분의 brnchCd=0100161에서 = 뒤에 있는 `0100161`를 마트코드로 사용한다.
 ![lotte_search_3](https://github.com/miumida/martholiday/blob/master/img/lotte_search_3.png)<br>
+<br><br>
 #### Homeplus
-
+- 홈플러스 매장명 찾기를 통해 원하는 홈플러스 매장을 검색한다<br>
+  매장명 검색 페이지 :  http://corporate.homeplus.co.kr/STORE/HyperMarket.aspx
+- 조회된 목록에서 우너하는 매장의 '입점 정보'를 클릭한다.
+- 매장정보가 나타나면 주소창에 있는 sn=0017 부분에서 = 뒤에 있는 `0017`을 마트코드로 사용한다.
