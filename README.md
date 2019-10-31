@@ -74,8 +74,8 @@ sensor:
 
 
 #### 롯데마트
-- 롯데마트 지점찾기 페이지로 접속하여 원하는 롯데마트 지점을 검색한다.
-  지점찾기 : http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001
+- 롯데마트 지점찾기 페이지로 접속하여 원하는 롯데마트 지점을 검색한다.<br>
+  지점찾기 페이지 : http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001
 ![lotte_search_1](https://github.com/miumida/martholiday/blob/master/img/lotte_search_1.png)<br>
 - 조회된 목록에서 원하는 지점의 '지점사이트' 버튼을 클릭한다.
 ![lotte_search_2](https://github.com/miumida/martholiday/blob/master/img/lotte_search_2.png)<br>
