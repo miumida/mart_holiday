@@ -74,10 +74,11 @@ sensor:
 
 
 #### 롯데마트
-롯데마트 지점찾기 페이지(http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001)로 접속하여 원하는 롯데마트 지점을 검색한다.
-
+- 롯데마트 지점찾기 페이지(http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001)로 접속하여 원하는 롯데마트 지점을 검색한다.
 ![lotte_search_1](https://github.com/miumida/martholiday/blob/master/img/lotte_search_1.png)<br>
+- 조회된 목록에서 원하는 지점의 '지점사이트' 버튼을 클릭한다.
 ![lotte_search_2](https://github.com/miumida/martholiday/blob/master/img/lotte_search_2.png)<br>
+- 지점사이트가 열리면 주소창에 마지막 부분의 brnchCd=0100161에서 = 뒤에 있는 0100161를 마트코드로 사용한다.
 ![lotte_search_3](https://github.com/miumida/martholiday/blob/master/img/lotte_search_3.png)<br>
 #### Homeplus
 
