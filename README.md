@@ -38,7 +38,7 @@ sensor:
 
 |옵션|값|
 |--|--|
-|platform| (필수) martholiday |
+|platform| (필수) mart_holiday |
 |marts| (필수) 센서로 등록할 마트 정보를 추가 |
 
 
