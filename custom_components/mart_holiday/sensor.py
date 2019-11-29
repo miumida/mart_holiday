@@ -160,6 +160,16 @@ def ConvertLmartToComm(val):
     try:
         tmp = val.split('/')
 
+        #01/01 형식이 아닌 01월 01일 형식을 위한 처리
+        if len(tmp) == 0:
+            tmp32 = val.split(' ')
+            if len(tmp32) > 0:
+                tmp32[0] = tmp32[0].replace("월", "")
+                tmp32[1] = tmp32[1].replace("일", "")
+
+                tmp.append(tmp32[0])
+                tmp.append(tmp32[1])
+
         #현재는 12월이고 val이 1월이면 현재년도+1
         if ( pMonth == '12' and tmp[0] == '01' ):
             pYear =  str(int(pYear) + 1)
@@ -410,6 +420,11 @@ class LotteMartAPI:
 
             r = re.compile("\d{2}/\d{2}")
             rtn = r.findall(holidate)
+	    
+	    #01월 01일 형식으로 되어 있는 경우도 처리가능하도록 추가
+	    if len(rtn) == 0:
+                rk = re.compile("\d{2}월 \d{2}일")
+                rtn = rk.findall(holidate)
 
             lmart_dict[self._brnchCd]= {
                 'id'       : self._brnchCd,
