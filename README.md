@@ -8,6 +8,13 @@ E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sen
 ![screenshot_l](https://github.com/miumida/martholiday/blob/master/Screenshot_l.png)<br>
 ![screenshot_h](https://github.com/miumida/martholiday/blob/master/Screenshot_h.png)<br>
 <br><br>
+## Version history
+| Version | Date        |               |
+| :-----: | :---------: | ------------- |
+| v1.0.0    | 2019.11.29  | First version  |
+| v1.0.1    | 2019.12.03  | 롯데마트 00월 00일로 등록된 휴무일 처리추가 |
+
+<br><br>
 ## Installation
 - HA 설치 경로 아래 custom_components 에 파일을 넣어줍니다.<br>
   `<config directory>/custom_components/mart_holiday/__init__.py`<br>
