@@ -167,8 +167,10 @@ def ConvertLmartToComm(val):
                 tmp32[0] = tmp32[0].replace("월", "")
                 tmp32[1] = tmp32[1].replace("일", "")
 
-                tmp.append(tmp32[0])
-                tmp.append(tmp32[1])
+                if ( pMonth == '12' and tmp32[0] == '01' ):
+                    pYear = str(int(pYear) + 1)
+                rslt = COMM_DATE_FORMAT.format(pYear, tmp32[0], tmp32[1])
+                return rslt
 
         #현재는 12월이고 val이 1월이면 현재년도+1
         if ( pMonth == '12' and tmp[0] == '01' ):
