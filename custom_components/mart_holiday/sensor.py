@@ -13,7 +13,7 @@ from homeassistant.const import (CONF_NAME, CONF_API_KEY, CONF_ICON)
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['xmltodict==0.12.0']
+REQUIREMENTS = ['xmltodict==0.12.0', 'beautifulsoup4==4.4.0']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -161,9 +161,9 @@ def ConvertLmartToComm(val):
         tmp = val.split('/')
 
         #01/01 형식이 아닌 01월 01일 형식을 위한 처리
-        if len(tmp) == 0:
+        if len(tmp) == 1:
             tmp32 = val.split(' ')
-            if len(tmp32) > 0:
+            if len(tmp32) > 1:
                 tmp32[0] = tmp32[0].replace("월", "")
                 tmp32[1] = tmp32[1].replace("일", "")
 
