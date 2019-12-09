@@ -1,6 +1,7 @@
 import logging
 import re
 import requests
+import calendar
 import voluptuous as vol
 from bs4 import BeautifulSoup
 
@@ -68,6 +69,26 @@ _EMART_PROPERTIES = {
   'HOLIDAY_DAY2_YOIL':['mdi:calendar'],
 }
 
+#COSTCO 매장별 휴무일
+_COSTCO_STORES = {
+  '01': ['대전점',          6, 6],
+  '02': ['대구점',          6, 6],
+  '03': ['세종젘',          6, 6],
+  '04': ['대구 혁신도시점', 6, 6],
+  '05': ['천안점',          6, 6],
+  '06': ['부산점',          6, 6],
+  '07': ['울산점',          2, 6],
+  '08': ['공세점',          6, 6],
+  '09': ['양재점',          6, 6],
+  '10': ['광명점',          6, 6],
+  '11': ['하남점',          6, 6],
+  '12': ['송도점',          6, 6],
+  '13': ['양평점',          6, 6],
+  '14': ['상봉점',          6, 6],
+  '15': ['일산점',          2, 2],
+  '16': ['의정부점',        6, 6],
+}
+
 DEFAULT_MART_NAME = 'mart'
 DEFAULT_MART_ICON = 'mdi:store'
 DEFAULT_MART_ALPHA_ICON = 'mdi:alpha-{}-box'
@@ -133,6 +154,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             except Exception as ex:
                 _LOGGER.error('Failed to update Homeplus API status Error: %s', ex)
 
+        if mart[CONF_MART_KIND] == 'c':
+            try:
+                costcoAPI     = CostcoAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE] )
+                costcoSensor  = CostcoSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], costcoAPI )
+                costcoSensor.update()
+                sensors += [costcoSensor]
+            except Exception as ex:
+                _LOGGER.error('Failed to update Costco API status Error: %s', ex)
+
     add_entities(sensors, True)
 
 
@@ -157,12 +187,12 @@ def ConvertLmartToComm(val):
     pYear  = dt.strftime("%Y")
     pMonth = dt.strftime("%m")
 
-    try:
-        tmp = val.split('/')
+    tmp = val.split('/')
 
+    try:
         #01/01 형식이 아닌 01월 01일 형식을 위한 처리
         if len(tmp) == 1:
-            tmp32 = val.split(' ')
+            tmp32 = val.split(" ")
             if len(tmp32) > 1:
                 tmp32[0] = tmp32[0].replace("월", "")
                 tmp32[1] = tmp32[1].replace("일", "")
@@ -422,9 +452,8 @@ class LotteMartAPI:
 
             r = re.compile("\d{2}/\d{2}")
             rtn = r.findall(holidate)
-	    
-	    #01월 01일 형식으로 되어 있는 경우도 처리가능하도록 추가
-	    if len(rtn) == 0:
+
+            if len(rtn) == 0:
                 rk = re.compile("\d{2}월 \d{2}일")
                 rtn = rk.findall(holidate)
 
@@ -618,6 +647,11 @@ class HomeplusSensor(Entity):
 
         self._holidate = '-' if holiday == '' else holiday
 
+#    @property
+#    def device_state_attributes(self):
+#        """Attributes."""
+#        return self.marts.get(self._mart_code,{})
+
     @property
     def state_attributes(self):
         """Return the optional state attributes."""
@@ -628,6 +662,170 @@ class HomeplusSensor(Entity):
         data[ATTR_TEL]  = self.marts.get(self._mart_code,{}).get('tel', '-')
 
         data[ATTR_HOLIDAY]   = self.marts.get(self._mart_code,{}).get('holiday', '-')
+        data[ATTR_HOLIDAY_1] = self.marts.get(self._mart_code,{}).get('holiday_1', '-')
+        data[ATTR_HOLIDAY_2] = self.marts.get(self._mart_code,{}).get('holiday_2', '-')
+
+        return data
+
+class CostcoAPI:
+    """Costco API."""
+    def __init__(self, mart_kind, name, mart_code):
+        """Initialize the Mart Holiday API."""
+        self._mart_kind = mart_kind
+        self._name      = name
+        self._mart_code = mart_code
+        self.result     = {}
+
+    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
+    def update(self):
+        """Update function for updating api information."""
+        try:
+            dt = datetime.now()
+
+            pYear  = dt.strftime("%Y")
+            pMonth = dt.strftime("%m")
+
+            mart_dict ={}
+
+            monthInfo = calendar.monthrange(int(pYear), int(pMonth))
+
+            data_1st = datetime(year=int(pYear), month=int(pMonth), day=1)
+
+            costco_nm = _COSTCO_STORES[self._mart_code][0]
+            costco_1st_holiday = _COSTCO_STORES[self._mart_code][1]
+            costco_2nd_holiday = _COSTCO_STORES[self._mart_code][2]
+
+            #둘째주
+            addCnt_1st = 0;
+
+            if monthInfo[0] != costco_1st_holiday:
+                for i in range(1,7):
+                    data_accu = data_1st + timedelta(days=i)
+                    if costco_1st_holiday == data_accu.weekday():
+                        diff =  data_accu - data_1st
+                        addCnt_1st = diff.days
+
+            if monthInfo[0] != costco_2nd_holiday:
+                if costco_1st_holiday == costco_2nd_holiday:
+                    addCnt_2nd = addCnt_1st
+                else:
+                    for i in range(1,7):
+                        data_accu = data_1st + timedelta(days=i)
+                        if costco_2nd_holiday == data_accu.weekday():
+                            diff =  data_accu - data_1st
+                            addCnt_2nd = diff.days
+
+            month_tmp_1 = []
+            i = addCnt_1st;
+            while i < monthInfo[1]:
+                if i > monthInfo[1]:
+                    break;
+
+                tmp = data_1st + timedelta(days=i)
+
+                month_tmp_1.append(tmp)
+
+                i = i + 7;
+
+            #넷째주
+            addCnt_2nd = 0;
+
+            if monthInfo[0] != costco_2nd_holiday:
+                addCnt_2nd = 7 - monthInfo[0] + costco_2nd_holiday
+
+            month_tmp_2 = []
+            i = addCnt_2nd;
+            while i < monthInfo[1]:
+                if i > monthInfo[1]:
+                    break;
+
+                tmp = data_1st + timedelta(days=i)
+
+                month_tmp_2.append(tmp)
+
+                i = i + 7;
+
+            #휴무일
+            holiday_1 = month_tmp_1[1]
+            holiday_2 = month_tmp_2[3]
+
+            #가까운 휴뭊일 지정
+            holidate = holiday_2 if holiday_1 < dt else holiday_1
+
+            mart_dict[self._mart_code]= {
+                'id'       : self._mart_code,
+                'name'     : self._name,
+
+                'holidate'   : holidate.strftime("%Y-%m-%d"),
+                'holiday_1'  : holiday_1.strftime("%Y-%m-%d"),
+                'holiday_2'  : holiday_2.strftime("%Y-%m-%d"),
+            }
+
+            self.result = mart_dict
+
+        except Exception as ex:
+            _LOGGER.error('Failed to update Costco API status Error: %s', ex)
+            raise
+
+
+class CostcoSensor(Entity):
+    def __init__(self, mart_kind, name, icon, mart_code, api):
+        self._mart_kind  = mart_kind
+        self._name       = name
+        self._mart_code  = mart_code
+        self._holidate   = None
+        self._api   = api
+        self._icon  = icon
+        self._state = None
+        self.marts  = {}
+
+    @property
+    def entity_id(self):
+        """Return the entity ID."""
+        return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
+
+    @property
+    def name(self):
+        """Return the name of the sensor, if any."""
+        if not self._name:
+            return '{}'.format(self._mart_kind)
+        return '코스트코({})'.format(self._name)
+
+    @property
+    def icon(self):
+        """Icon to use in the frontend, if any."""
+        return DEFAULT_MART_ALPHA_ICON.format(self._mart_kind)
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._holidate
+
+    @property
+    def attribution(self):
+        """Return the attribution."""
+        return 'Powered by miumida'
+
+    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
+    def update(self):
+        """Get the latest state of the sensor."""
+        if self._api is None:
+            return
+        self._api.update()
+        marts_dict = self._api.result
+
+        self.marts = marts_dict
+
+        self._holidate = self.marts.get(self._mart_code,{}).get('holidate', '-')
+
+    @property
+    def state_attributes(self):
+        """Return the optional state attributes."""
+        data={}
+
+        data[ATTR_ID]   = self.marts.get(self._mart_code,{}).get('id', '-')
+        data[ATTR_NAME] = self.marts.get(self._mart_code,{}).get('name', '-')
+
         data[ATTR_HOLIDAY_1] = self.marts.get(self._mart_code,{}).get('holiday_1', '-')
         data[ATTR_HOLIDAY_2] = self.marts.get(self._mart_code,{}).get('holiday_2', '-')
 
