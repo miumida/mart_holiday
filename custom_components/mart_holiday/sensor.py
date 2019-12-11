@@ -73,7 +73,7 @@ _EMART_PROPERTIES = {
 _COSTCO_STORES = {
   '01': ['대전점',          6, 6],
   '02': ['대구점',          6, 6],
-  '03': ['세종젘',          6, 6],
+  '03': ['세종점',          6, 6],
   '04': ['대구 혁신도시점', 6, 6],
   '05': ['천안점',          6, 6],
   '06': ['부산점',          6, 6],
@@ -278,16 +278,16 @@ class EMartAPI:
 
                 nextOffday = max(nowDt, holiday1)
 
-                if nextOffday == nowDt:
-                    nextOffday = max(nextOffday, holiday2)
+                if holiday1 >= nowDt:
+                    nextOffday = holiday1
 
-                if nextOffday == nowDt:
-                    nextOffday = max(nextOffday, holiday3)
+                if ( nowDt > holiday1 and nowDt <= holiday2 ):
+                    nextOffday = holiday2
 
-                if nextOffday == nowDt:
-                    nextOffday = nowDt
+                if ( nowDt > holiday2 and nowDt <= holiday3 ):
+                    nextOffday = holiday3
 
-                if nextOffday > maxHoliday:
+                if nowDt  > maxHoliday:
                     nextOffday = '-'
 
                 emart_dict[item['JIJUM_ID']] = {
@@ -332,16 +332,16 @@ class EMartAPI:
 
                     nextOffday = max(nowDt, holiday1)
 
-                    if nextOffday == nowDt:
-                        nextOffday = max(nextOffday, holiday2)
+                    if holiday1 >= nowDt:
+                        nextOffday = holiday1
 
-                    if nextOffday == nowDt:
-                        nextOffday = max(nextOffday, holiday3)
+                    if ( nowDt > holiday1 and nowDt <= holiday2 ):
+                        nextOffday = holiday2
 
-                    if nextOffday == nowDt:
-                        nextOffday = nowDt
+                    if ( nowDt > holiday2 and nowDt <= holiday3 ):
+                        nextOffday = holiday3
 
-                    if nextOffday > maxHoliday:
+                    if nowDt  > maxHoliday:
                         nextOffday = '-'
 
                     emart_dict[item['JIJUM_ID']] = {
@@ -520,7 +520,15 @@ class LotteMartSensor(Entity):
 
         self.marts = marts_dict
 
-        self._holidate = self.marts.get(self._brnchCd,{}).get('holiday_1','-')
+        dt = datetime.now()
+        nowDt = dt.strftime("%d")
+
+        holiday_1 = self.marts.get(self._brnchCd,{}).get('holiday_1','-')
+        holiday_2 = self.marts.get(self._brnchCd,{}).get('holiday_2','-')
+
+        holidate = holiday_1 if nowDt <= holiday_1[-2:] else holiday_2
+
+        self._holidate = holidate
 
     @property
     def device_state_attributes(self):
@@ -685,6 +693,8 @@ class CostcoAPI:
             pYear  = dt.strftime("%Y")
             pMonth = dt.strftime("%m")
 
+            nowDt = dt.strftime("%d")
+
             mart_dict ={}
 
             monthInfo = calendar.monthrange(int(pYear), int(pMonth))
@@ -749,8 +759,8 @@ class CostcoAPI:
             holiday_1 = month_tmp_1[1]
             holiday_2 = month_tmp_2[3]
 
-            #가까운 휴뭊일 지정
-            holidate = holiday_2 if holiday_1 < dt else holiday_1
+            #가까운 휴무일 지정
+            holidate = holiday_1 if holiday_1.strftime("%d") >= nowDt else holiday_2
 
             mart_dict[self._mart_code]= {
                 'id'       : self._mart_code,
