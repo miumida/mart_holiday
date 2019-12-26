@@ -27,11 +27,12 @@ CONF_AREA       = 'area'
 EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}' 
 LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
 HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
+HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
 
 # E마트 지역 코드
 _EMART_AREA_CD = {
   '서울' : 'A',
-  '인천' : 'C', 
+  '인천' : 'C',
   '경기' : 'I',
   '대전' : 'F',
   '세종' : 'Q',
@@ -42,7 +43,7 @@ _EMART_AREA_CD = {
   '부산' : 'B',
   '전라' : 'L',
   '광주' : 'E',
-  '강원' : 'H', 
+  '강원' : 'H',
   '제주' : 'P',
 }
 
@@ -197,6 +198,10 @@ def ConvertLmartToComm(val):
                 tmp32[0] = tmp32[0].replace("월", "")
                 tmp32[1] = tmp32[1].replace("일", "")
 
+                #월이 1자리인 경우, 자리수 맞춤
+                if len(tmp32[0]) == 1:
+                    tmp32[0] = '0' + tmp32[0]
+
                 if ( pMonth == '12' and tmp32[0] == '01' ):
                     pYear = str(int(pYear) + 1)
                 rslt = COMM_DATE_FORMAT.format(pYear, tmp32[0], tmp32[1])
@@ -213,6 +218,14 @@ def ConvertLmartToComm(val):
 
     return val;
 
+# 문자 YYYY-MM-DD를 datetime으로 형변환
+def Comm2Date(val):
+    tmp = val.split("-")
+
+    if len(tmp) > 1:
+        return datetime(year=int(tmp[0]), month=int(tmp[1]), day=int(tmp[2]))
+    else:
+        return None
 
 class EMartAPI:
     """EMart API."""
@@ -255,7 +268,8 @@ class EMartAPI:
             #dateList 정보 추출
             emartJijum = response.json()['dateList']
 
-            emart_dict ={}
+            emart_dict = {}
+            emart_dict_tmp = {}
 
             nowDt = dt.strftime("%d") #str(dt.day)
 
@@ -274,6 +288,22 @@ class EMartAPI:
 
                 if nowDt > maxHoliday:
                     bNext = True
+
+                    emart_dict_tmp[item['JIJUM_ID']] = {
+                        'jijum_id': item['JIJUM_ID'],
+                        'name'    : item['NAME'],
+                        'area'    : item['AREA'],
+                        'tel'     : item['TEL'],
+
+                        'holiday_1' : ConvertEmartToComm(item['HOLIDAY_DAY1_YMD']),
+                        'holiday_2' : ConvertEmartToComm(item['HOLIDAY_DAY2_YMD']),
+                        'holiday_3' : ConvertEmartToComm(item['HOLIDAY_DAY3_YMD']),
+
+                        'year'        : pYear,
+                        'month'       : pMonth,
+                        'next_holiday' : '-'
+                    }
+
                     break
 
                 nextOffday = max(nowDt, holiday1)
@@ -310,7 +340,7 @@ class EMartAPI:
 
             if bNext:
                 url = EMART_BSE_URL
-                url = url.format(self._area, pYear, rMonthPlus)
+                url = url.format(self._area, rYearPlus, rMonthPlus)
 
                 response = requests.get(url, timeout=10)
                 response.raise_for_status()
@@ -320,29 +350,11 @@ class EMartAPI:
                 for item in emartJijumN:
                     if self._mart_code != item['JIJUM_ID']: continue
 
-                    nextOffday = '01'
-                    nowDt      = '01'
-
                     holiday1 = item['HOLIDAY_DAY1']
                     holiday2 = item['HOLIDAY_DAY2']
                     holiday3 = item['HOLIDAY_DAY3']
 
-                    #현재일자 기준으로 가까운 휴무일 표시를 위해 날짜계
-                    maxHoliday = max(holiday1, holiday2, holiday3)
-
-                    nextOffday = max(nowDt, holiday1)
-
-                    if holiday1 >= nowDt:
-                        nextOffday = holiday1
-
-                    if ( nowDt > holiday1 and nowDt <= holiday2 ):
-                        nextOffday = holiday2
-
-                    if ( nowDt > holiday2 and nowDt <= holiday3 ):
-                        nextOffday = holiday3
-
-                    if nowDt  > maxHoliday:
-                        nextOffday = '-'
+                    nextOffday = holiday1
 
                     emart_dict[item['JIJUM_ID']] = {
                         'jijum_id': item['JIJUM_ID'],
@@ -354,11 +366,13 @@ class EMartAPI:
                         'holiday_2' : ConvertEmartToComm(item['HOLIDAY_DAY2_YMD']),
                         'holiday_3' : ConvertEmartToComm(item['HOLIDAY_DAY3_YMD']),
 
-                        'year'         : pYear,
+                        'year'         : rYearPlus,
                         'month'        : rMonthPlus,
                         'next_holiday' : nextOffday
                     }
 
+            if len(emart_dict) == 0:
+                emart_dict = emart_dict_tmp
 
             self.result = emart_dict
             #_LOGGER.debug('EMart API Request Result: %s', self.result)
@@ -454,7 +468,7 @@ class LotteMartAPI:
             rtn = r.findall(holidate)
 
             if len(rtn) == 0:
-                rk = re.compile("\d{2}월 \d{2}일")
+                rk = re.compile("\d+월 \d+일")
                 rtn = rk.findall(holidate)
 
             lmart_dict[self._brnchCd]= {
@@ -526,7 +540,12 @@ class LotteMartSensor(Entity):
         holiday_1 = self.marts.get(self._brnchCd,{}).get('holiday_1','-')
         holiday_2 = self.marts.get(self._brnchCd,{}).get('holiday_2','-')
 
-        holidate = holiday_1 if nowDt <= holiday_1[-2:] else holiday_2
+        dt_holiday_1 = Comm2Date(holiday_1)
+        dt_holiday_2 = Comm2Date(holiday_2)
+
+        holidate = holiday_1 if dt <= dt_holiday_1 else holiday_2
+
+        #holidate = holiday_1 if nowDt <= holiday_1[-2:] else holiday_2
 
         self._holidate = holidate
 
