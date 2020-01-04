@@ -726,6 +726,7 @@ class CostcoAPI:
 
             #둘째주
             addCnt_1st = 0;
+	    addCnt_2nd = 0;
 
             if monthInfo[0] != costco_1st_holiday:
                 for i in range(1,7):
@@ -757,11 +758,6 @@ class CostcoAPI:
                 i = i + 7;
 
             #넷째주
-            addCnt_2nd = 0;
-
-            if monthInfo[0] != costco_2nd_holiday:
-                addCnt_2nd = 7 - monthInfo[0] + costco_2nd_holiday
-
             month_tmp_2 = []
             i = addCnt_2nd;
             while i < monthInfo[1]:
