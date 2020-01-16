@@ -207,6 +207,22 @@ def ConvertLmartToComm(val):
                 rslt = COMM_DATE_FORMAT.format(pYear, tmp32[0], tmp32[1])
                 return rslt
 
+            if len(tmp32) == 1:
+                val = val.replace("월", "월 ")
+
+                tmpNone =  val.split(" ")
+                if len(tmpNone) > 1:
+                    tmpNone[0] = tmpNone[0].replace("월", "")
+                    tmpNone[1] = tmpNone[1].replace("일", "")
+
+                if len(tmpNone[0]) == 1:
+                     tmpNone[0] = '0' + tmpNone[0]
+
+                     if ( pMonth == '12' and tmpNone[0] == '01' ):
+                         pYear = str(int(pYear) + 1)
+                     rslt = COMM_DATE_FORMAT.format(pYear, tmpNone[0], tmpNone[1])
+                     return rslt
+
         #현재는 12월이고 val이 1월이면 현재년도+1
         if ( pMonth == '12' and tmp[0] == '01' ):
             pYear =  str(int(pYear) + 1)
@@ -467,8 +483,14 @@ class LotteMartAPI:
             r = re.compile("\d{2}/\d{2}")
             rtn = r.findall(holidate)
 
+            # 00월 00일 처리
             if len(rtn) == 0:
                 rk = re.compile("\d+월 \d+일")
+                rtn = rk.findall(holidate)
+
+            # 00월00일 처리
+            if len(rtn) == 0:
+                rk = re.compile("\d+월\d+일")
                 rtn = rk.findall(holidate)
 
             lmart_dict[self._brnchCd]= {
@@ -758,6 +780,11 @@ class CostcoAPI:
                 i = i + 7;
 
             #넷째주
+#            addCnt_2nd = 0;
+
+#            if monthInfo[0] != costco_2nd_holiday:
+#                addCnt_2nd = 7 - monthInfo[0] + costco_2nd_holiday
+
             month_tmp_2 = []
             i = addCnt_2nd;
             while i < monthInfo[1]:
