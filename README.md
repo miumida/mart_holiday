@@ -7,7 +7,8 @@ E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sen
 ![screenshot_e](https://github.com/miumida/martholiday/blob/master/Screenshot_e.png)<br>
 ![screenshot_l](https://github.com/miumida/martholiday/blob/master/Screenshot_l.png)<br>
 ![screenshot_h](https://github.com/miumida/martholiday/blob/master/Screenshot_h.png)<br>
-![screenshot_c](https://github.com/miumida/martholiday/blob/master/Screenshot_c.png)<br>
+![screenshot_c](https://github.com/miumida/mart_holiday/blob/master/Screenshot_c.png)<br>
+![screenshot_g](https://github.com/kws9271/mart_holiday/blob/master/Screenshot_g.png)<br>
 <br><br>
 ## Version history
 | Version | Date        |               |
@@ -19,6 +20,7 @@ E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sen
 | v1.0.4    | 2019.12.27  | 롯데마트/이마트 가까운 휴무일 체크로직 수정. |
 | v1.0.5    | 2020.01.05  | 코스트코 휴무일 센서 오류 수정. |
 | v1.0.6    | 2020.01.16  | 롯데마트 '00월00일' 휴무일 처리 추가 |
+| ???       | ???         | GS슈퍼마켓 휴무일 센서 추가 |
 
 <br><br>
 ## Installation
@@ -49,6 +51,9 @@ sensor:
     - mart_kind: 'c'
       name: '대구점'
       mart_code: '01'
+    - mart_kind: 'g'
+      name: '포항죽도점'
+      mart_code: 12021
 ```
 ### 기본 설정값
 
@@ -63,7 +68,7 @@ sensor:
 |옵션|값|
 |--|--|
 |mart_kind| (필수) 마트 종류 |
-|name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨 |
+|name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨, (필수) GS슈퍼마켓은 마트 이름으로 검색하여 마트이름이 정확해야 함. |
 |mart_code| (필수) 마트 지점코드 or 마트 지점ID |
 |area| (필수) E마트only. mart는 area코드를 가지고  |
 
@@ -76,6 +81,7 @@ sensor:
 |l|롯데마트|
 |h|Homeplus|
 |c|Costco|
+|g|GS슈퍼마켓|
 
 
 ### 마트별 코드 확인(mart_code)
@@ -123,4 +129,12 @@ sensor:
 - 코스트코는 매장이 현재 16개로 홈페이지에서 정보를 가져와서 휴무일을 표시하지 않는다.
 - 코스트코 홈페이지에 나와있는 16개의 매장을 기준으로 2자리 숫자로 단순히 코드로 사용한다.
   해당 지점에 대해서는 코드표를 확인하여, mart_code에 사용한다.
+<br><br>
+#### GS슈퍼마켓
+- GS슈퍼마켓 매장명 찾기를 통해 원하는 GS슈퍼마켓 매장을 검색한다<br>
+  매장명 검색 페이지: http://gsthefresh.gsretail.com/thefresh/ko/market-info/find
+  ![gssupermarket_search_1](https://github.com/kws9271/mart_holiday/blob/master/img/gssupermarket_search_1.png)<br>
+- 조회된 목록에서 원하는 매장의 이름을 아래 주소에서 넣어 마트코드(shopCode)를 확인한다.
+  http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName=[마트이름]
+  ![gssupermarket_search_1](https://github.com/kws9271/mart_holiday/blob/master/img/gssupermarket_search_2.png)<br>
 <br>
