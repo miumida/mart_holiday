@@ -1,4 +1,7 @@
 # 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor
+
+![Version v1.0.6][version-shield]
+
 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor for Home Assistant<br>
 E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
 롯데마트의 경우, 지점 담당자가 휴무일을 제대로 입력하지 않거나 갱신하지 않아 제대로 조회되지 않는 경우도 있습니다.<br>
@@ -124,3 +127,5 @@ sensor:
 - 코스트코 홈페이지에 나와있는 16개의 매장을 기준으로 2자리 숫자로 단순히 코드로 사용한다.
   해당 지점에 대해서는 코드표를 확인하여, mart_code에 사용한다.
 <br>
+
+[version-shield]: https://img.shields.io/badge/version-v1.0.6-orange.svg
