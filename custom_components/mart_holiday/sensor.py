@@ -589,7 +589,7 @@ class LotteMartSensor(Entity):
         dt_holiday_1 = Comm2Date(holiday_1)
         dt_holiday_2 = Comm2Date(holiday_2)
 
-        holidate = holiday_1 if dt <= dt_holiday_1 else holiday_2
+        holidate = holiday_1 if dt <= dt_holiday_1 + timedelta(days=1) else holiday_2
 
         #holidate = holiday_1 if nowDt <= holiday_1[-2:] else holiday_2
 
@@ -1000,9 +1000,9 @@ class GssuperSensor(Entity):
         try:
             hol_2 = datetime.strptime(self.marts[self._brnchCd]['holiday_2'], "%Y-%m-%d")
             hol_1 = datetime.strptime(self.marts[self._brnchCd]['holiday_1'], "%Y-%m-%d")
-            if dt > hol_2:
+            if dt > hol_2 + timedelta(days=1):
                 self._state = None
-            elif dt > hol_1:
+            elif dt > hol_1 + timedelta(days=1):
                 self._state = self.marts[self._brnchCd]['holiday_2']
             else:
                 self._state = self.marts[self._brnchCd]['holiday_1']
