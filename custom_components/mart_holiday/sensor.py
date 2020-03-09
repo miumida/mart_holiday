@@ -4,6 +4,7 @@ import requests
 import calendar
 import voluptuous as vol
 from bs4 import BeautifulSoup
+from urllib import parse
 
 import homeassistant.helpers.config_validation as cv
 
@@ -28,6 +29,7 @@ EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year=
 LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
 HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
 HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
+GSSUPER_BSE_URL = 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}'
 
 # E마트 지역 코드
 _EMART_AREA_CD = {
@@ -164,6 +166,15 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             except Exception as ex:
                 _LOGGER.error('Failed to update Costco API status Error: %s', ex)
 
+        if mart[CONF_MART_KIND] == 'g':
+            try:
+                gssuperAPI      = GssuperAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE])
+                gssuperSensor   = GssuperSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], gssuperAPI)
+                gssuperSensor.update()
+                sensors += [gssuperSensor]
+            except Exception as ex:
+                _LOGGER.error('Failed to update GS SuperMart API status Error: %s', ex)
+
     add_entities(sensors, True)
 
 
@@ -233,6 +244,23 @@ def ConvertLmartToComm(val):
         _LOGGER.error('Failed to update ConvertLmartToComm() status Error: %s', ex)
 
     return val;
+
+#GS슈퍼마켓 날짜 형식 변환
+def ConvertGssuperToComm(val):
+    """MM월 DD일을 날짜값으로 변경"""  
+    if val is None:
+        return None
+
+    dt = datetime.now()
+    try:
+        vMonth = datetime.strptime(val, "%m월 %d일").month
+        if vMonth < dt.month:
+            return repr(dt.year+1)+"-"+val.replace("월 ", "-").replace("일", "")
+        else:
+            return repr(dt.year)+"-"+val.replace("월 ", "-").replace("일", "")
+    except:
+        return None
+
 
 # 문자 YYYY-MM-DD를 datetime으로 형변환
 def Comm2Date(val):
@@ -551,6 +579,7 @@ class LotteMartSensor(Entity):
         """Get the latest state of the sensor."""
         if self._api is None:
             return
+
         self._api.update()
         marts_dict = self._api.result
 
@@ -565,9 +594,7 @@ class LotteMartSensor(Entity):
         dt_holiday_1 = Comm2Date(holiday_1)
         dt_holiday_2 = Comm2Date(holiday_2)
 
-        holidate = holiday_1 if dt <= dt_holiday_1 else holiday_2
-
-        #holidate = holiday_1 if nowDt <= holiday_1[-2:] else holiday_2
+        holidate = holiday_1 if dt <= dt_holiday_1 + timedelta(days=1) else holiday_2
 
         self._holidate = holidate
 
@@ -882,3 +909,117 @@ class CostcoSensor(Entity):
         data[ATTR_HOLIDAY_2] = self.marts.get(self._mart_code,{}).get('holiday_2', '-')
 
         return data
+
+class GssuperAPI:
+    """Gs Supermarket API"""
+    def __init__(self, mart_kind, name, mart_code):
+        """Initialize the Mart Holiday API"""
+        self._mart_kind = mart_kind
+        self._name      = name
+        self._mart_code = mart_code
+        self.result     = {}
+
+    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
+    def update(self):
+        """Update function for updating api information."""
+        try:
+
+            url = GSSUPER_BSE_URL.format(parse.quote(self._name))
+
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+
+            results = response.json()['results']
+
+            gssuper_dict = {}
+
+            for itm in results:
+                if itm['shopCode'] != self._mart_code:
+                    continue
+
+                gssuper_dict[itm['shopCode']] = {
+                    'id'        :  itm['shopCode'],
+                    'name'      : itm['shopName'],
+                    'tel'       : itm['phone'],
+                    'address'   : itm['address'],
+
+                    'holiday_1' : ConvertGssuperToComm(itm['closedDate1']),
+                    'holiday_2' : ConvertGssuperToComm(itm['closedDate2']),
+                    'holiday_3' : ConvertGssuperToComm(itm['closedDate3']),
+                    'holiday_4' : ConvertGssuperToComm(itm['closedDate4']),
+                }
+
+#            if itm['shopName'] != self._name:
+#                _LOGGER.info(self._name+'의 마트 코드가 정확하지 않습니다. 입력값: '+self._name+'검색값: '+ itm['shopName'])
+#            if itm['shopCode'] != self._mart_code:
+#                raise Exception('마트 이름이 정확하지 않습니다.')
+
+            self.result = gssuper_dict
+
+        except Exception as ex:
+            _LOGGER.error('Failed to update GS SuperMart API status Error: %s', ex)
+            raise
+
+class GssuperSensor(Entity):
+    def __init__(self, mart_kind, name, icon, mart_code, api):
+        self._mart_kind = mart_kind
+        self._name      = name
+        self._mart_code = mart_code
+        self._api       = api
+        self._icon  = icon
+        self._state = None
+        self.marts  = {}
+
+    @property
+    def entity_id(self):
+        """Return the entity ID."""
+        return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
+
+    @property
+    def name(self):
+        """Return the name of the sensor, if any."""
+        return 'GS슈퍼마켓({})'.format(self._name)
+
+    @property
+    def icon(self):
+        """Icon to use in the frontend, if any."""
+        return DEFAULT_MART_ALPHA_ICON.format(self._mart_kind)
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    @property
+    def attribution(self):
+        """Return the attribution."""
+        return 'Modified by 별명짓기귀찮음'
+
+    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
+    def update(self):
+        """Get the latest state of the sensor."""
+        if self._api is None:
+            return
+
+        self._api.update()
+        self.marts = self._api.result
+
+        dt = datetime.now()
+
+        try:
+            hol_2 = datetime.strptime(self.marts[self._mart_code]['holiday_2'], "%Y-%m-%d")
+            hol_1 = datetime.strptime(self.marts[self._mart_code]['holiday_1'], "%Y-%m-%d")
+
+            if dt > hol_2 + timedelta(days=1):
+                self._state = None
+            elif dt > hol_1 + timedelta(days=1):
+                self._state = self.marts[self._mart_code]['holiday_2']
+            else:
+                self._state = self.marts[self._mart_code]['holiday_1']
+        except:
+            self._state = None
+
+    @property
+    def device_state_attributes(self):
+        """Attributes."""
+        return self.marts[self._mart_code]
