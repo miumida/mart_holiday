@@ -1,9 +1,10 @@
 # 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor
 
-![Version v1.0.6][version-shield]
+![HAKC)][hakc-shield]
+![Version v1.0.7][version-shield]
 
 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor for Home Assistant<br>
-E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
+E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
 롯데마트의 경우, 지점 담당자가 휴무일을 제대로 입력하지 않거나 갱신하지 않아 제대로 조회되지 않는 경우도 있습니다.<br>
 ![mart_holiday_sensor](https://github.com/miumida/mart_holiday/blob/master/mart_holiday_sensor.png?raw=true)<br>
 
@@ -21,16 +22,22 @@ E마트/롯데마트/Homeplus의 휴무일을 나타내주는 Home Assistant Sen
 | v1.0.3    | 2019.12.11  | 이마트/롯데마트/코스트코 휴무일 센서 오류 수정. |
 | v1.0.4    | 2019.12.27  | 롯데마트/이마트 가까운 휴무일 체크로직 수정. |
 | v1.0.5    | 2020.01.05  | 코스트코 휴무일 센서 오류 수정. |
-| v1.0.6    | 2020.01.16  | 롯데마트 '00월00일' 휴무일 처리 추가 |
+| v1.0.6    | 2020.01.16  | 롯데마트 '00월00일' 휴무일 처리 추가. |
+| v1.0.7    | 2020.03.09  | GS슈퍼마켓 휴무일 센서 추가(source by 별명짓기귀찮음[kws9271]).<br> 롯데마트 휴무일 오류 수정. |
 
 <br><br>
 ## Installation
+### Manual
 - HA 설치 경로 아래 custom_components 에 파일을 넣어줍니다.<br>
   `<config directory>/custom_components/mart_holiday/__init__.py`<br>
   `<config directory>/custom_components/mart_holiday/manifest.json`<br>
   `<config directory>/custom_components/mart_holiday/sensor.py`<br>
 - configuration.yaml 파일에 설정을 추가합니다.<br>
 - Home-Assistant 를 재시작합니다<br>
+### HACS
+- HACS > SETTINGS 메뉴 선택
+- ADD CUSTOM REPOSITORY에 'https://github.com/miumida/mart_holiday' 입력하고 Category에 'integration' 선택 후, 저장
+- HACS > INTEGRATIONS 메뉴 선택 후, 검색하여 설치
 <br><br>
 ## Usage
 ### configuration
@@ -52,6 +59,9 @@ sensor:
     - mart_kind: 'c'
       name: '대구점'
       mart_code: '01'
+    - mart_kind: 'g'
+      name: '포항죽도점'
+      mart_code: 12021
 ```
 ### 기본 설정값
 
@@ -66,7 +76,7 @@ sensor:
 |옵션|값|
 |--|--|
 |mart_kind| (필수) 마트 종류 |
-|name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨 |
+|name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨<br>(필수) GS슈퍼마켓은 마트이름으로 검색하여 정확한 이름 입력필요 |
 |mart_code| (필수) 마트 지점코드 or 마트 지점ID |
 |area| (필수) E마트only. mart는 area코드를 가지고  |
 
@@ -79,6 +89,7 @@ sensor:
 |l|롯데마트|
 |h|Homeplus|
 |c|Costco|
+|g|GS슈퍼마켓|
 
 
 ### 마트별 코드 확인(mart_code)
@@ -126,6 +137,17 @@ sensor:
 - 코스트코는 매장이 현재 16개로 홈페이지에서 정보를 가져와서 휴무일을 표시하지 않는다.
 - 코스트코 홈페이지에 나와있는 16개의 매장을 기준으로 2자리 숫자로 단순히 코드로 사용한다.
   해당 지점에 대해서는 코드표를 확인하여, mart_code에 사용한다.
-<br>
+<br><br>
+#### GS슈퍼마켓
+- GS슈퍼마켓 매장명 찾기를 통해 원하는 GS슈퍼마켓 매장을 검색한다
+  매장명 검색 페이지: http://gsthefresh.gsretail.com/thefresh/ko/market-info/find
+![gssuper_search_1](https://github.com/miumida/martholiday/blob/master/img/gssupermarket_search_1.png)<br>
+- 조회된 목록에서 원하는 매장의 이름을 아래 주소에서 넣어 마트코드(shopCode)를 확인한다.
+  http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName=[마트이름]
+![gssuper_search_2](https://github.com/miumida/martholiday/blob/master/img/gssupermarket_search_2.png)<br>
+<br><br>
+### Thx.
+- 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.0.6-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.0.7-orange.svg
+[hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
