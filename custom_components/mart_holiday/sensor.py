@@ -515,7 +515,8 @@ class LotteMartAPI:
 
             holidate = lmart['holiDate']
 
-            r = re.compile("\d{2}/\d{2}")
+            # 00/00 처리
+	    r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
 
             # 00월 00일 처리
@@ -526,11 +527,6 @@ class LotteMartAPI:
             # 00월00일 처리
             if len(rtn) == 0:
                 rk = re.compile("\d+월\d+일")
-                rtn = rk.findall(holidate)
-
-            # 00/00 처리
-            if len(rtn) == 0:
-                rk = re.compile("\d{1,2}\/\d{1,2}")
                 rtn = rk.findall(holidate)
 
             lmart_dict[self._brnchCd]= {
