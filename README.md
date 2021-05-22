@@ -152,5 +152,5 @@ sensor:
 ### Thx.
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.0.9-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.0.10-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
