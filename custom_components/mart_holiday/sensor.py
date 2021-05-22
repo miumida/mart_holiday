@@ -516,7 +516,7 @@ class LotteMartAPI:
             holidate = lmart['holiDate']
 
             # 00/00 처리
-	    r = re.compile("\d{1,2}\/\d{1,2}")
+            r = re.compile("\d{2}/\d{2}")
             rtn = r.findall(holidate)
 
             # 00월 00일 처리
