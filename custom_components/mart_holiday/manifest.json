@@ -2,10 +2,12 @@
   "domain": "mart_holiday",
   "name": "mart_holiday",
   "documentation": "https://github.com/miumida/mart_holiday",
-  "requirements": [],
+  "requirements": ["xmltodict==0.12.0", "beautifulsoup4==4.4.0"],
   "dependencies": [],
   "codeowners": [
     "@miumida"
   ],
-  "version": "1.0.10"
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "version": "1.1.0"
 }

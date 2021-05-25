@@ -5,6 +5,7 @@ import calendar
 import voluptuous as vol
 from bs4 import BeautifulSoup
 from urllib import parse
+import json
 
 import homeassistant.helpers.config_validation as cv
 
@@ -13,17 +14,14 @@ from datetime import datetime
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (CONF_NAME, CONF_API_KEY, CONF_ICON)
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['xmltodict==0.12.0', 'beautifulsoup4==4.4.0']
+from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MANUFACT
 
 _LOGGER = logging.getLogger(__name__)
 
 CONF_MARTS      = 'marts'
-CONF_MART_KIND  = 'mart_kind'
-CONF_MART_NAME  = 'name'
-CONF_MART_CODE  = 'mart_code'
-CONF_AREA       = 'area'
 
 EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}' 
 LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
@@ -31,77 +29,11 @@ HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?
 HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
 GSSUPER_BSE_URL = 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}'
 
-# E마트 지역 코드
-_EMART_AREA_CD = {
-  '서울' : 'A',
-  '인천' : 'C',
-  '경기' : 'I',
-  '대전' : 'F',
-  '세종' : 'Q',
-  '충청' : 'N',
-  '대구' : 'D',
-  '경상' : 'J',
-  '울산' : 'G',
-  '부산' : 'B',
-  '전라' : 'L',
-  '광주' : 'E',
-  '강원' : 'H',
-  '제주' : 'P',
-}
-
-# E마트 속성
-_EMART_PROPERTIES = {
-  'CODE':[None],
-  'AREA':[None],
-  'JIJUM_ID':[None],
-  'NAME':[None],
-  'TEL' :['mdi:cellphone'],
-
-  'HOLIDAY_YEAR':[None],
-  'HOLIDAY_MONTH':[None],
-
-  'HOLIDAY_DAY2_YMD':['mdi:calendar'],
-  'HOLIDAY_DAY1_YMD':['mdi:calendar'],
-  'HOLIDAY_DAY3_YMD':['mdi:calendar'],
-
-  'HOLIDAY_DAY1':['mdi:calendar'],
-  'HOLIDAY_DAY2':['mdi:calendar'],
-  'HOLIDAY_DAY3':['mdi:calendar'],
-
-  'HOLIDAY_DAY1_YOIL':['mdi:calendar'],
-  'HOLIDAY_DAY2_YOIL':['mdi:calendar'],
-}
-
-#COSTCO 매장별 휴무일
-_COSTCO_STORES = {
-  '01': ['대전점',          6, 6],
-  '02': ['대구점',          6, 6],
-  '03': ['세종점',          6, 6],
-  '04': ['대구 혁신도시점', 6, 6],
-  '05': ['천안점',          6, 6],
-  '06': ['부산점',          6, 6],
-  '07': ['울산점',          2, 6],
-  '08': ['공세점',          6, 6],
-  '09': ['양재점',          6, 6],
-  '10': ['광명점',          6, 6],
-  '11': ['하남점',          6, 6],
-  '12': ['송도점',          6, 6],
-  '13': ['양평점',          6, 6],
-  '14': ['상봉점',          6, 6],
-  '15': ['일산점',          2, 2],
-  '16': ['의정부점',        6, 6],
-}
-
-DEFAULT_MART_NAME = 'mart'
-DEFAULT_MART_ICON = 'mdi:store'
 DEFAULT_MART_ALPHA_ICON = 'mdi:alpha-{}-box'
-DEFAULT_MART_CODE = '-'
-DEFAULT_AREA = ''
 
 COMM_DATE_FORMAT = '{}-{}-{}'
 
-MIN_TIME_BETWEEN_API_UPDATES    = timedelta(seconds=14400) #4시간 마다
-MIN_TIME_BETWEEN_SENSOR_UPDATES = timedelta(seconds=14400) #4시간 마다
+SCAN_INTERVAL = timedelta(seconds=14400)
 
 ATTR_NAME = 'name'
 ATTR_ID   = 'id'
@@ -114,13 +46,10 @@ ATTR_HOLIDAY_2 = 'holiday_2'
 ATTR_HOLIDAY_3 = 'holiday_3'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_MARTS): vol.All(cv.ensure_list, [{
-        vol.Required(CONF_MART_KIND): cv.string,
-        vol.Optional(CONF_NAME, default = DEFAULT_MART_NAME): cv.string,
-        vol.Optional(CONF_ICON, default = DEFAULT_MART_ICON): cv.string,
-        vol.Optional(CONF_MART_CODE, default = DEFAULT_MART_CODE): cv.string,
-        vol.Optional(CONF_AREA, default = DEFAULT_AREA): cv.string,
-    }]),
+    vol.Required(CONF_MART_KIND): cv.string,
+    vol.Required(CONF_NAME): cv.string,
+    vol.Required(CONF_MART_CODE): cv.string,
+    vol.Optional(CONF_AREA, default = ''): cv.string,
 })
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -132,8 +61,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     for mart in marts:
         if mart[CONF_MART_KIND] == 'e':
             try:
-                eAPI    = EMartAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE], mart[CONF_AREA] )
-                eSensor = EMartSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], eAPI )
+                eAPI    = EMartAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], mart[CONF_AREA] )
+                eSensor = EMartSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], eAPI )
                 eSensor.update()
                 sensors += [eSensor]
             except Exception as ex:
@@ -141,8 +70,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
         if mart[CONF_MART_KIND] == 'l':
             try:
-                lotteAPI    = LotteMartAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE] )
-                lotteSensor = LotteMartSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], lotteAPI )
+                lotteAPI    = LotteMartAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
+                lotteSensor = LotteMartSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], lotteAPI )
                 lotteSensor.update()
                 sensors += [lotteSensor]
             except Exception as ex:
@@ -150,8 +79,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
         if mart[CONF_MART_KIND] == 'h':
             try:
-                homeplusAPI    = HomeplusAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE] )
-                homeplusSensor = HomeplusSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], homeplusAPI )
+                homeplusAPI    = HomeplusAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
+                homeplusSensor = HomeplusSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], homeplusAPI )
                 homeplusSensor.update()
                 sensors += [homeplusSensor]
             except Exception as ex:
@@ -159,8 +88,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
         if mart[CONF_MART_KIND] == 'c':
             try:
-                costcoAPI     = CostcoAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE] )
-                costcoSensor  = CostcoSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], costcoAPI )
+                costcoAPI     = CostcoAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
+                costcoSensor  = CostcoSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], costcoAPI )
                 costcoSensor.update()
                 sensors += [costcoSensor]
             except Exception as ex:
@@ -168,14 +97,75 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
         if mart[CONF_MART_KIND] == 'g':
             try:
-                gssuperAPI      = GssuperAPI( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_MART_CODE])
-                gssuperSensor   = GssuperSensor( mart[CONF_MART_KIND], mart[CONF_MART_NAME], mart[CONF_ICON], mart[CONF_MART_CODE], gssuperAPI)
+                gssuperAPI      = GssuperAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE])
+                gssuperSensor   = GssuperSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], gssuperAPI)
                 gssuperSensor.update()
                 sensors += [gssuperSensor]
             except Exception as ex:
                 _LOGGER.error('Failed to update GS SuperMart API status Error: %s', ex)
 
     add_entities(sensors, True)
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Add a entity from a config_entry."""
+    mart_kind = config_entry.data[CONF_MART_KIND]
+    mart_code = config_entry.data[CONF_MART_CODE]
+    mart_name = config_entry.data[CONF_NAME]
+
+    area = config_entry.data[CONF_AREA] or ''
+
+    sensors = []
+
+    if mart_kind == 'e':
+        try:
+            eAPI    = EMartAPI( hass, mart_kind, mart_name, mart_code, area )
+            eSensor = EMartSensor( mart_kind, mart_name, mart_code, eAPI )
+            await eSensor.async_update()
+            sensors += [eSensor]
+        except Exception as ex:
+            _LOGGER.error('Failed to update EMart API status Error: %s', ex)
+
+    if mart_kind == 'l':
+        try:
+            lotteAPI    = LotteMartAPI( hass, mart_kind, mart_name, mart_code )
+            lotteSensor = LotteMartSensor( mart_kind, mart_name, mart_code, lotteAPI )
+            await lotteSensor.async_update()
+            sensors += [lotteSensor]
+        except Exception as ex:
+            _LOGGER.error('Failed to update LotteMart API status Error: %s', ex)
+
+
+    if mart_kind == 'h':
+        try:
+            homeplusAPI    = HomeplusAPI( hass, mart_kind, mart_name, mart_code )
+            homeplusSensor = HomeplusSensor( mart_kind, mart_name, mart_code, homeplusAPI )
+            await homeplusSensor.async_update()
+            sensors += [homeplusSensor]
+        except Exception as ex:
+            _LOGGER.error('Failed to update Homeplus API status Error: %s', ex)
+
+
+    if mart_kind == 'c':
+        try:
+            costcoAPI     = CostcoAPI( mart_kind, mart_name, mart_code )
+            costcoSensor  = CostcoSensor( mart_kind, mart_name, mart_code, costcoAPI )
+            costcoSensor.update()
+            sensors += [costcoSensor]
+        except Exception as ex:
+            _LOGGER.error('Failed to update Costco API status Error: %s', ex)
+
+
+    if mart_kind == 'g':
+        try:
+            gssuperAPI      = GssuperAPI( hass, mart_kind, mart_name, mart_code)
+            gssuperSensor   = GssuperSensor( mart_kind, mart_name, mart_code, gssuperAPI)
+            await gssuperSensor.async_update()
+            sensors += [gssuperSensor]
+        except Exception as ex:
+            _LOGGER.error('Failed to update GS SuperMart API status Error: %s', ex)
+
+
+    async_add_entities(sensors, True)
 
 
 def viewState(val):
@@ -213,8 +203,12 @@ def ConvertLmartToComm(val):
                 if len(tmp32[0]) == 1:
                     tmp32[0] = '0' + tmp32[0]
 
+                if len(tmp32[1]) == 1:
+                    tmp32[1] = '0' + tmp32[1]
+
                 if ( pMonth == '12' and tmp32[0] == '01' ):
                     pYear = str(int(pYear) + 1)
+
                 rslt = COMM_DATE_FORMAT.format(pYear, tmp32[0], tmp32[1])
                 return rslt
 
@@ -229,10 +223,35 @@ def ConvertLmartToComm(val):
                 if len(tmpNone[0]) == 1:
                      tmpNone[0] = '0' + tmpNone[0]
 
-                     if ( pMonth == '12' and tmpNone[0] == '01' ):
-                         pYear = str(int(pYear) + 1)
-                     rslt = COMM_DATE_FORMAT.format(pYear, tmpNone[0], tmpNone[1])
-                     return rslt
+                if len(tmpNone[1]) == 1:
+                     tmpNone[1] = '0' + tmpNone[1]
+
+                if ( pMonth == '12' and tmpNone[0] == '01' ):
+                     pYear = str(int(pYear) + 1)
+
+                rslt = COMM_DATE_FORMAT.format(pYear, tmpNone[0], tmpNone[1])
+                return rslt
+
+            # 0.0 처리
+            if len(tmp32) == 1:
+                tmpNone =  val.split(".")
+                if len(tmpNone) > 1:
+                    tmpNone[0] = tmpNone[0]
+                    tmpNone[1] = tmpNone[1]
+
+                if len(tmpNone[1]) == 1:
+                    tmpNone[1] = '0' + tmpNone[1]
+
+                if len(tmpNone[0]) == 1:
+                    tmpNone[0] = '0' + tmpNone[0]
+
+                if ( pMonth == '12' and tmpNone[0] == '01' ):
+                    pYear = str(int(pYear) + 1)
+
+                rslt = COMM_DATE_FORMAT.format(pYear, tmpNone[0], tmpNone[1])
+                return rslt
+
+
         elif len(tmp) == 2:
             if len(tmp[0]) == 1:
                 tmp[0] = '0' + tmp[0]
@@ -254,7 +273,7 @@ def ConvertLmartToComm(val):
 
 #GS슈퍼마켓 날짜 형식 변환
 def ConvertGssuperToComm(val):
-    """MM월 DD일을 날짜값으로 변경"""  
+    """MM월 DD일을 날짜값으로 변경"""
     if val is None:
         return None
 
@@ -280,16 +299,16 @@ def Comm2Date(val):
 
 class EMartAPI:
     """EMart API."""
-    def __init__(self, mart_kind, name, mart_code, area):
+    def __init__(self, hass, mart_kind, name, mart_code, area):
         """Initialize the EMart API."""
+        self._hass      = hass
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
         self._area      = area
         self.result     = {}
 
-    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
-    def update(self):
+    async def update(self):
         """Update function for updating api information."""
         try:
             dt = datetime.now()
@@ -300,11 +319,15 @@ class EMartAPI:
             url = EMART_BSE_URL
             url = url.format(self._area, pYear, pMonth)
 
-            response = requests.get(url, timeout=10)
+            session = async_get_clientsession(self._hass)
+
+            response = await session.get(url, timeout=30)
             response.raise_for_status()
 
+            json_param = await response.json(content_type='text/html')
+
             #param 정보 추출
-            param = response.json()['param']
+            param = json_param['param']
 
             #년도
             rYear      = param.get('year', '-')
@@ -317,7 +340,7 @@ class EMartAPI:
             rMonthMinus = param.get('monthMinus', '-')
 
             #dateList 정보 추출
-            emartJijum = response.json()['dateList']
+            emartJijum = json_param['dateList']
 
             emart_dict = {}
             emart_dict_tmp = {}
@@ -339,6 +362,7 @@ class EMartAPI:
 
                 if nowDt > maxHoliday:
                     bNext = True
+
 
                     emart_dict_tmp[item['JIJUM_ID']] = {
                         'jijum_id': item['JIJUM_ID'],
@@ -393,10 +417,14 @@ class EMartAPI:
                 url = EMART_BSE_URL
                 url = url.format(self._area, rYearPlus, rMonthPlus)
 
-                response = requests.get(url, timeout=10)
+                session = async_get_clientsession(self._hass)
+
+                response = await session.get(url, timeout=30)
                 response.raise_for_status()
 
-                emartJijumN = response.json()['dateList']
+                json_param = await response.json(content_type='text/html')
+
+                emartJijumN = json_param['dateList']
 
                 for item in emartJijumN:
                     if self._mart_code != item['JIJUM_ID']: continue
@@ -432,25 +460,28 @@ class EMartAPI:
             raise
 
 class EMartSensor(Entity):
-    def __init__(self, mart_kind, name, icon, mart_code,  api):
+    def __init__(self, mart_kind, name, mart_code,  api):
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
+        self._entity_id = None
+
         self._api       = api
-        self._icon      = icon
+
         self._state     = None
         self.marts      = {}
 
     @property
-    def entity_id(self):
+    def unique_id(self):
         """Return the entity ID."""
         return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
 
     @property
     def name(self):
         """Return the name of the sensor, if any."""
-        if not self._name:
-            return '{}'.format(self._mart_kind)
+        if self._entity_id is None:
+            self._entity_id = 'mart_holiday_{}_{}'.format(self._mart_kind, self._mart_code)
+            return self._entity_id
         return '이마트({})'.format(self._name)
 
     @property
@@ -468,13 +499,13 @@ class EMartSensor(Entity):
                 next_offday = COMM_DATE_FORMAT.format(self.marts[key].get('year', '-'), self.marts[key].get('month','-'), next_offday)
         return next_offday
 
-    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
-    def update(self):
+
+    async def async_update(self):
         """Get the latest state of the sensor."""
         if self._api is None:
             return
 
-        self._api.update()
+        await self._api.update()
         marts_dict = self._api.result
 
         self.marts = marts_dict
@@ -484,18 +515,40 @@ class EMartSensor(Entity):
         """Attributes."""
         return self.marts[self._mart_code]
 
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "connections": {(self._mart_kind, self._mart_code)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._mart_kind,
+                    self._mart_code,
+                )
+            },
+            "manufacturer": MANUFACT,
+            "model": "대형마트 휴무일",
+            "name": "대형마트 휴무일(E마트)",
+            "sw_version": SW_VERSION,
+            "via_device": (DOMAIN, self._mart_code),
+            "entry_type": "service",
+        }
+
+
 
 class LotteMartAPI:
     """LotteMart API."""
-    def __init__(self, mart_kind, name, brnchCd):
+    def __init__(self, hass, mart_kind, name, brnchCd):
         """Initialize the Mart Holiday API."""
+
+        self._hass      = hass
         self._mart_kind = mart_kind
         self._name      = name
         self._brnchCd   = brnchCd
         self.result     = {}
 
-    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
-    def update(self):
+    async def update(self):
         """Update function for updating api information."""
         try:
             dt = datetime.now()
@@ -506,17 +559,21 @@ class LotteMartAPI:
             url = LMART_BSE_URL
             url = url.format(self._brnchCd)
 
-            response = requests.get(url, timeout=10)
+            session = async_get_clientsession(self._hass)
+
+            response = await session.get(url, timeout=30)
             response.raise_for_status()
 
-            lmart = response.json()['data']
+            json_data = await response.json()
+
+            lmart = json_data['data']
 
             lmart_dict ={}
 
             holidate = lmart['holiDate']
 
             # 00/00 처리
-            r = re.compile("\d{2}/\d{2}")
+            r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
 
             # 00월 00일 처리
@@ -527,6 +584,11 @@ class LotteMartAPI:
             # 00월00일 처리
             if len(rtn) == 0:
                 rk = re.compile("\d+월\d+일")
+                rtn = rk.findall(holidate)
+
+            # 0.0 처리
+            if len(rtn) == 0:
+                rk = re.compile("\d+\.\d+")
                 rtn = rk.findall(holidate)
 
             lmart_dict[self._brnchCd]= {
@@ -545,26 +607,29 @@ class LotteMartAPI:
             raise
 
 class LotteMartSensor(Entity):
-    def __init__(self, mart_kind, name, icon, brnchCd, api):
+    def __init__(self, mart_kind, name, brnchCd, api):
         self._mart_kind = mart_kind
         self._name      = name
+        self._entity_id = None
+
         self._brnchCd   = brnchCd
         self._holidate  = None
+
         self._api   = api
-        self._icon  = icon
         self._state = None
         self.marts  = {}
 
     @property
-    def entity_id(self):
+    def unique_id(self):
         """Return the entity ID."""
         return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._brnchCd)
 
     @property
     def name(self):
         """Return the name of the sensor, if any."""
-        if not self._name:
-            return '{}'.format(self._mart_kind)
+        if self._entity_id is None:
+            self._entity_id = 'mart_holiday_{}_{}'.format(self._mart_kind, self._brnchCd)
+            return self._entity_id
         return '롯데마트({})'.format(self._name)
 
     @property
@@ -582,13 +647,12 @@ class LotteMartSensor(Entity):
         """Return the attribution."""
         return 'Powered by miumida'
 
-    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Get the latest state of the sensor."""
         if self._api is None:
             return
 
-        self._api.update()
+        await self._api.update()
         marts_dict = self._api.result
 
         self.marts = marts_dict
@@ -611,17 +675,37 @@ class LotteMartSensor(Entity):
         """Attributes."""
         return self.marts.get(self._brnchCd,{})
 
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "connections": {(self._mart_kind, self._brnchCd)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._mart_kind,
+                    self._brnchCd,
+                )
+            },
+            "manufacturer": MANUFACT,
+            "model": "대형마트 휴무일",
+            "name": "대형마트 휴무일(롯데마트)",
+            "sw_version": SW_VERSION,
+            "via_device": (DOMAIN, self._brnchCd),
+            "entry_type": "service",
+        }
+
 class HomeplusAPI:
     """Homeplus API."""
-    def __init__(self, mart_kind, name, mart_code):
+    def __init__(self, hass, mart_kind, name, mart_code):
         """Initialize the Mart Holiday API."""
+        self._hass      = hass
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
         self.result     = {}
 
-    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
-    def update(self):
+    async def update(self):
         """Update function for updating api information."""
         try:
             dt = datetime.now()
@@ -632,10 +716,12 @@ class HomeplusAPI:
             url = HOMEPLUS_BSE_URL
             url = url.format(self._mart_code)
 
-            response = requests.get(url, timeout=10)
+            session = async_get_clientsession(self._hass)
+
+            response = await session.get(url, timeout=30)
             response.raise_for_status()
 
-            page = response.content.decode('utf8')
+            page = await response.text()
 
             mart_dict ={}
 
@@ -667,7 +753,7 @@ class HomeplusAPI:
                 'tel'      : tel
             }
 
-						# 휴무이을 딕셔너리에 추가
+            # 휴무이을 딕셔너리에 추가
             cnt = 1
             for tmp in rtn:
                 mart_dict[self._mart_code].update( {'holiday_{}'.format(str(cnt)):tmp} )
@@ -680,26 +766,29 @@ class HomeplusAPI:
             raise
 
 class HomeplusSensor(Entity):
-    def __init__(self, mart_kind, name, icon, mart_code, api):
+    def __init__(self, mart_kind, name, mart_code, api):
         self._mart_kind  = mart_kind
         self._name       = name
         self._mart_code  = mart_code
         self._holidate   = None
+        self._entity_id  = None
+
         self._api   = api
-        self._icon  = icon
+
         self._state = None
         self.marts  = {}
 
     @property
-    def entity_id(self):
+    def unique_id(self):
         """Return the entity ID."""
         return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
 
     @property
     def name(self):
         """Return the name of the sensor, if any."""
-        if not self._name:
-            return '{}'.format(self._mart_kind)
+        if self._entity_id is None:
+            self._entity_id = 'mart_holiday_{}_{}'.format(self._mart_kind, self._mart_code)
+            return self._entity_id
         return '홈플러스({})'.format(self._name)
 
     @property
@@ -717,12 +806,12 @@ class HomeplusSensor(Entity):
         """Return the attribution."""
         return 'Powered by miumida'
 
-    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Get the latest state of the sensor."""
         if self._api is None:
             return
-        self._api.update()
+
+        await self._api.update()
         marts_dict = self._api.result
 
         self.marts = marts_dict
@@ -730,11 +819,6 @@ class HomeplusSensor(Entity):
         holiday = self.marts.get(self._mart_code,{}).get('holiday', '-')
 
         self._holidate = '-' if holiday == '' else holiday
-
-#    @property
-#    def device_state_attributes(self):
-#        """Attributes."""
-#        return self.marts.get(self._mart_code,{})
 
     @property
     def state_attributes(self):
@@ -751,6 +835,28 @@ class HomeplusSensor(Entity):
 
         return data
 
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "connections": {(self._mart_kind, self._mart_code)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._mart_kind,
+                    self._mart_code,
+                )
+            },
+            "manufacturer": MANUFACT,
+            "model": "대형마트 휴무일",
+            "name": "대형마트 휴무일(Homeplus)",
+            "sw_version": SW_VERSION,
+            "via_device": (DOMAIN, self._mart_code),
+            "entry_type": "service",
+        }
+
+
+
 class CostcoAPI:
     """Costco API."""
     def __init__(self, mart_kind, name, mart_code):
@@ -760,7 +866,6 @@ class CostcoAPI:
         self._mart_code = mart_code
         self.result     = {}
 
-    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
     def update(self):
         """Update function for updating api information."""
         try:
@@ -856,26 +961,29 @@ class CostcoAPI:
 
 
 class CostcoSensor(Entity):
-    def __init__(self, mart_kind, name, icon, mart_code, api):
+    def __init__(self, mart_kind, name, mart_code, api):
         self._mart_kind  = mart_kind
         self._name       = name
         self._mart_code  = mart_code
         self._holidate   = None
+        self._entity_id  = None
+
         self._api   = api
-        self._icon  = icon
+
         self._state = None
         self.marts  = {}
 
     @property
-    def entity_id(self):
+    def unique_id(self):
         """Return the entity ID."""
         return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
 
     @property
     def name(self):
         """Return the name of the sensor, if any."""
-        if not self._name:
-            return '{}'.format(self._mart_kind)
+        if self._entity_id is None:
+            self._entity_id = 'mart_holiday_{}_{}'.format(self._mart_kind, self._mart_code)
+            return self._entity_id
         return '코스트코({})'.format(self._name)
 
     @property
@@ -893,7 +1001,6 @@ class CostcoSensor(Entity):
         """Return the attribution."""
         return 'Powered by miumida'
 
-    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
     def update(self):
         """Get the latest state of the sensor."""
         if self._api is None:
@@ -918,26 +1025,51 @@ class CostcoSensor(Entity):
 
         return data
 
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "connections": {(self._mart_kind, self._mart_code)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._mart_kind,
+                    self._mart_code,
+                )
+            },
+            "manufacturer": MANUFACT,
+            "model": "대형마트 휴무일",
+            "name": "대형마트 휴무일(Costco)",
+            "sw_version": SW_VERSION,
+            "via_device": (DOMAIN, self._mart_code),
+            "entry_type": "service",
+        }
+
+
 class GssuperAPI:
     """Gs Supermarket API"""
-    def __init__(self, mart_kind, name, mart_code):
+    def __init__(self, hass, mart_kind, name, mart_code):
         """Initialize the Mart Holiday API"""
+        self._hass      = hass
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
         self.result     = {}
 
-    @Throttle(MIN_TIME_BETWEEN_API_UPDATES)
-    def update(self):
+    async def update(self):
         """Update function for updating api information."""
         try:
 
             url = GSSUPER_BSE_URL.format(parse.quote(self._name))
 
-            response = requests.get(url, timeout=10)
+            session = async_get_clientsession(self._hass)
+
+            response = await session.get(url, timeout=30)
             response.raise_for_status()
 
-            results = response.json()['results']
+            json_results = await response.json()
+
+            results = json_results['results']
 
             gssuper_dict = {}
 
@@ -969,23 +1101,28 @@ class GssuperAPI:
             raise
 
 class GssuperSensor(Entity):
-    def __init__(self, mart_kind, name, icon, mart_code, api):
+    def __init__(self, mart_kind, name, mart_code, api):
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
+        self._entity_id = None
+
         self._api       = api
-        self._icon  = icon
+
         self._state = None
         self.marts  = {}
 
     @property
-    def entity_id(self):
+    def unique_id(self):
         """Return the entity ID."""
         return 'sensor.mart_holiday_{}{}'.format(self._mart_kind, self._mart_code)
 
     @property
     def name(self):
         """Return the name of the sensor, if any."""
+        if self._entity_id is None:
+            self._entity_id = 'mart_holiday_{}_{}'.format(self._mart_kind, self._mart_code)
+            return self._entity_id
         return 'GS슈퍼마켓({})'.format(self._name)
 
     @property
@@ -1003,13 +1140,12 @@ class GssuperSensor(Entity):
         """Return the attribution."""
         return 'Modified by 별명짓기귀찮음'
 
-    @Throttle(MIN_TIME_BETWEEN_SENSOR_UPDATES)
-    def update(self):
+    async def async_update(self):
         """Get the latest state of the sensor."""
         if self._api is None:
             return
 
-        self._api.update()
+        await self._api.update()
         self.marts = self._api.result
 
         dt = datetime.now()
@@ -1031,3 +1167,23 @@ class GssuperSensor(Entity):
     def device_state_attributes(self):
         """Attributes."""
         return self.marts[self._mart_code]
+
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "connections": {(self._mart_kind, self._mart_code)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self._mart_kind,
+                    self._mart_code,
+                )
+            },
+            "manufacturer": MANUFACT,
+            "model": "대형마트 휴무일",
+            "name": "대형마트 휴무일(GS슈퍼마켓)",
+            "sw_version": SW_VERSION,
+            "via_device": (DOMAIN, self._mart_code),
+            "entry_type": "service",
+        }
