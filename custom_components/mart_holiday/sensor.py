@@ -17,13 +17,15 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MANUFACT
+from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MANUFACT, _AREA
 
 _LOGGER = logging.getLogger(__name__)
 
 CONF_MARTS      = 'marts'
 
-EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}' 
+EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}'
+EMART_IMSI_URL = 'https://emartapp.emart.com/branch/view.do?id={}'
+
 LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
 HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
 HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
@@ -118,7 +120,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     if mart_kind == 'e':
         try:
-            eAPI    = EMartAPI( hass, mart_kind, mart_name, mart_code, area )
+#            eAPI    = EMartAPI( hass, mart_kind, mart_name, mart_code, area )
+            eAPI    = EMartImsiAPI( hass, mart_kind, mart_name, mart_code, area )
             eSensor = EMartSensor( mart_kind, mart_name, mart_code, eAPI )
             await eSensor.async_update()
             sensors += [eSensor]
@@ -459,6 +462,89 @@ class EMartAPI:
             _LOGGER.error('Failed to update EMart API status Error: %s', ex)
             raise
 
+class EMartImsiAPI:
+    """EMart API."""
+    def __init__(self, hass, mart_kind, name, mart_code, area):
+        """Initialize the EMart API."""
+        self._hass      = hass
+        self._mart_kind = mart_kind
+        self._name      = name
+        self._mart_code = mart_code
+        self._area      = area
+        self.result     = {}
+
+    async def update(self):
+        """Update function for updating api information."""
+        try:
+            dt = datetime.now()
+
+            pYear  = dt.strftime("%Y")
+            pMonth = dt.strftime("%m")
+
+            url = EMART_IMSI_URL
+            url = url.format(self._mart_code)
+
+            session = async_get_clientsession(self._hass)
+
+            response = await session.get(url, timeout=30)
+            response.raise_for_status()
+
+            html = await response.text()
+
+            soup = BeautifulSoup(html, "lxml")
+
+            contents = soup.find("div", {"class": "box-info other-info"})
+
+            holi = contents.select("dd")[1].text.strip()
+
+            r = re.compile("\d{1,2}\/\d{1,2}")
+            rtn = r.findall(holi)
+
+            _LOGGER.error(rtn)
+
+            holi1 = '-'
+            holi2 = '-'
+            holi3 = '-'
+
+            if len(rtn) > 0:
+                holi1 = rtn[0]
+
+            if len(rtn) > 1:
+                holi2 = rtn[1]
+
+            if len(rtn) > 2:
+                holi3 = rtn[2]
+
+            emart_dict = {}
+
+            nowDt = dt.strftime("%d")
+
+            nextOffday = nowDt
+
+            #param 정보 추출
+            emart_dict[self._mart_code] = {
+                        'jijum_id': self._mart_code,
+                        'name'    : self._name,
+                        'area'    : _AREA[self._area],
+
+                        'holiday_1' : ConvertLmartToComm(holi1) if len(rtn) > 0 else holi1,
+                        'holiday_2' : ConvertLmartToComm(holi2) if len(rtn) > 1 else holi2,
+                        'holiday_3' : ConvertLmartToComm(holi3) if len(rtn) > 2 else holi3,
+
+                        'year'         : pYear,
+                        'month'        : pMonth,
+                        'next_holiday' : nextOffday
+                    }
+
+            self.result = emart_dict
+            #_LOGGER.debug('EMart API Request Result: %s', self.result)
+        except Exception as ex:
+            _LOGGER.error('Failed to update EMart Imsi API status Error: %s', ex)
+            raise
+
+
+
+
 class EMartSensor(Entity):
     def __init__(self, mart_kind, name, mart_code,  api):
         self._mart_kind = mart_kind
@@ -467,6 +553,8 @@ class EMartSensor(Entity):
         self._entity_id = None
 
         self._api       = api
+
+        self._holidate  = None
 
         self._state     = None
         self.marts      = {}
@@ -492,12 +580,13 @@ class EMartSensor(Entity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        next_offday = '-'
-        for key in self.marts:
-            next_offday = self.marts[key].get('next_holiday', '-')
-            if next_offday != '-':
-                next_offday = COMM_DATE_FORMAT.format(self.marts[key].get('year', '-'), self.marts[key].get('month','-'), next_offday)
-        return next_offday
+#        next_offday = '-'
+#        for key in self.marts:
+#            next_offday = self.marts[key].get('next_holiday', '-')
+#            if next_offday != '-':
+#                next_offday = COMM_DATE_FORMAT.format(self.marts[key].get('year', '-'), self.marts[key].get('month','-'), next_offday)
+#        return next_offday
+        return self._holidate
 
 
     async def async_update(self):
@@ -507,6 +596,19 @@ class EMartSensor(Entity):
 
         await self._api.update()
         marts_dict = self._api.result
+
+        holiday_1 = marts_dict[self._mart_code].get('holiday_1', '')
+        holiday_2 = marts_dict[self._mart_code].get('holiday_2', '')
+
+        if holiday_2 != '-':
+            dt_holiday_1 = Comm2Date(holiday_1)
+            dt_holiday_2 = Comm2Date(holiday_2)
+
+            self._holidate = holiday_1 if dt <= dt_holiday_1 + timedelta(days=1) else holiday_2
+        else:
+            self._holidate = holiday_1
+
+        #self._holidate = holidate
 
         self.marts = marts_dict
 
