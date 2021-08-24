@@ -1,7 +1,7 @@
 # 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor
 
 ![HAKC)][hakc-shield]
-![Version v1.1.1][version-shield]
+![Version v1.1.2][version-shield]
 
 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor for Home Assistant<br>
 E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
@@ -28,6 +28,7 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 | v1.0.9    | 2021.05.21  | 롯데마트 00/00 일자 처리 수정. |
 | v1.1.0    | 2021.05.25  | 통합구성요소 적용. |
 | v1.1.1    | 2021.08.14  | 이마트 휴무일로직 임시수정 |
+| v1.1.2    | 2021.08.25  | 이마트 휴무일로직 오류 수정. |
 
 <br><br>
 ## Installation
@@ -154,5 +155,5 @@ sensor:
 ### Thx.
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.1.1-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.1.2-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
