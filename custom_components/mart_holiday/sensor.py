@@ -500,7 +500,12 @@ class EMartImsiAPI:
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holi)
 
-            _LOGGER.error(rtn)
+            # 사회적 거리두기 메세지로 dd 위치 변경된 것을 감안하고 추가로 적용
+            if len(rtn) == 0:
+                holi = contents.select("dd")[2].text.strip()
+
+                r = re.compile("\d{1,2}\/\d{1,2}")
+                rtn = r.findall(holi)
 
             holi1 = '-'
             holi2 = '-'
@@ -600,6 +605,8 @@ class EMartSensor(Entity):
         holiday_1 = marts_dict[self._mart_code].get('holiday_1', '')
         holiday_2 = marts_dict[self._mart_code].get('holiday_2', '')
 
+        dt = datetime.now()
+
         if holiday_2 != '-':
             dt_holiday_1 = Comm2Date(holiday_1)
             dt_holiday_2 = Comm2Date(holiday_2)
@@ -609,6 +616,10 @@ class EMartSensor(Entity):
             self._holidate = holiday_1
 
         #self._holidate = holidate
+        
+        #휴무일이 현재일자보다 이후면 '-'로 상태표시
+        if ( self._holidate != '-' and dt > Comm2Date(self._holidate) ):
+            self._holidate = '-'
 
         self.marts = marts_dict
 
