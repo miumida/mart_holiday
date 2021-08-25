@@ -493,19 +493,12 @@ class EMartImsiAPI:
 
             soup = BeautifulSoup(html, "lxml")
 
-            contents = soup.find("div", {"class": "box-info other-info"})
+            contents = soup.find("dt", {"class": "icon-closed"}).find_next_siblings("dd")
 
-            holi = contents.select("dd")[1].text.strip()
+            holi = contents[0].text.strip()
 
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holi)
-
-            # 사회적 거리두기 메세지로 dd 위치 변경된 것을 감안하고 추가로 적용
-            if len(rtn) == 0:
-                holi = contents.select("dd")[2].text.strip()
-
-                r = re.compile("\d{1,2}\/\d{1,2}")
-                rtn = r.findall(holi)
 
             holi1 = '-'
             holi2 = '-'
