@@ -155,6 +155,7 @@ sensor:
 <br><br>
 ### Thx.
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
+- 저장장치님 이마트 휴무일 찾는 부분 아이디어 제공해주셔서 감사합니다:D
 
 [version-shield]: https://img.shields.io/badge/version-v1.1.3-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
