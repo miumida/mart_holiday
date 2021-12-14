@@ -617,7 +617,7 @@ class EMartSensor(Entity):
         self.marts = marts_dict
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes (self):
         """Attributes."""
         return self.marts[self._mart_code]
 
@@ -777,7 +777,7 @@ class LotteMartSensor(Entity):
         self._holidate = holidate
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes (self):
         """Attributes."""
         return self.marts.get(self._brnchCd,{})
 
@@ -1270,7 +1270,7 @@ class GssuperSensor(Entity):
             self._state = None
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes (self):
         """Attributes."""
         return self.marts[self._mart_code]
 
