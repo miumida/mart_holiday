@@ -777,11 +777,6 @@ class LotteMartSensor(Entity):
         self._holidate = holidate
 
     @property
-    def device_state_attributes(self):
-        """Attributes."""
-        return self.marts.get(self._brnchCd,{})
-
-    @property
     def device_info(self):
         """Return device registry information for this entity."""
         return {
