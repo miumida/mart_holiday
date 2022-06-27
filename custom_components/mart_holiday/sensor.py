@@ -682,6 +682,11 @@ class LotteMartAPI:
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
 
+            # 00/00,/00 처리
+            if len(rtn) == 1:
+                r = re.compile(",/\d{1,2}")
+                rtn.insert(1, rtn[0].split("/")[0] + r.findall(holidate)[0][1:])
+
             # 00월 00일 처리
             if len(rtn) == 0:
                 rk = re.compile("\d+월 \d+일")
