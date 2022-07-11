@@ -32,7 +32,9 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 | v1.1.3    | 2021.08.25  | 이마트 휴무일 가져오기 로직 개선(휴무일 아이콘기준으로 찾기). |
 | v1.1.4    | 2021.12.15  | Fix bug |
 | v1.1.5    | 2022.06.27  | Fix bug |
-| v1.1.6    | 2022.07.08. | bs4 requirement version 변경 |
+| v1.1.6    | 2022.07.08  | bs4 requirement version 변경 |
+| v1.1.7    | 2022.07.12  | 롯데마트 홈페이지 개편에 따른 휴무일로직 변경 |
+
 
 <br><br>
 ## Installation
@@ -73,14 +75,6 @@ sensor:
       mart_code: 12021
 ```
 
-### 기본 설정값
-
-|옵션|값|
-|--|--|
-|platform| (필수) mart_holiday |
-|marts| (필수) 센서로 등록할 마트 정보를 추가 |
-
-
 ### 센서별 설정값
 
 |옵션|값|
@@ -88,7 +82,6 @@ sensor:
 |mart_kind| (필수) 마트 종류 |
 |name| (옵션) 마트 이름(지점). 지정하지 않으면 'mart'로 저장됨<br>(필수) GS슈퍼마켓은 마트이름으로 검색하여 정확한 이름 입력필요 |
 |mart_code| (필수) 마트 지점코드 or 마트 지점ID |
-|area| (필수) E마트only. mart는 area코드를 가지고  |
 
 
 ### 마트 종류 (mart_kind) 옵션
@@ -118,7 +111,7 @@ sensor:
 <br><br>
 #### 롯데마트
 - 롯데마트 지점찾기 페이지로 접속하여 원하는 롯데마트 지점을 검색한다.<br>
-  지점찾기 페이지 : http://company.lottemart.com/bc/branch/main.do?menuCd=BM0201&SITELOC=DB001
+  지점찾기 페이지 : http://company.lottemart.com/shop/shop_search_type.asp?#schWord
 ![lotte_search_1](https://github.com/miumida/martholiday/blob/master/img/lotte_search_1.png)<br>
 - 조회된 목록에서 원하는 지점의 '지점사이트' 버튼을 클릭한다.
 ![lotte_search_2](https://github.com/miumida/martholiday/blob/master/img/lotte_search_2.png)<br>
@@ -160,5 +153,5 @@ sensor:
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 - 저장장치님 이마트 휴무일 찾는 부분 아이디어 제공해주셔서 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.1.6-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.1.7-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
