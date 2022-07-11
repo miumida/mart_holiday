@@ -14,7 +14,6 @@ CONFIG_SCHEMA = vol.Schema(
             vol.Schema({vol.Required(CONF_MART_KIND, default=DOMAIN): cv.string}),
             vol.Schema({vol.Required(CONF_MART_CODE): cv.string}),
             vol.Schema({vol.Required(CONF_NAME, default=None): cv.string}),
-            vol.Schema({vol.Optional(CONF_AREA, default=None): cv.string}),
         )
     },
     extra=vol.ALLOW_EXTRA,
