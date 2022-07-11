@@ -17,19 +17,11 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MANUFACT, _AREA
+from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MANUFACT, _AREA, LMART_SEARCH_URL, EMART_BSE_URL, EMART_IMSI_URL, LMART_BSE_URL, HOMEPLUS_BSE_URL, HOMEPLUS_EXPRESS_BSE_URL,GSSUPER_BSE_URL
 
 _LOGGER = logging.getLogger(__name__)
 
 CONF_MARTS      = 'marts'
-
-EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}'
-EMART_IMSI_URL = 'https://emartapp.emart.com/branch/view.do?id={}'
-
-LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
-HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
-HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
-GSSUPER_BSE_URL = 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}'
 
 DEFAULT_MART_ALPHA_ICON = 'mdi:alpha-{}-box'
 
@@ -51,62 +43,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_MART_KIND): cv.string,
     vol.Required(CONF_NAME): cv.string,
     vol.Required(CONF_MART_CODE): cv.string,
-    vol.Optional(CONF_AREA, default = ''): cv.string,
 })
-
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    name  = config.get(CONF_NAME)
-    marts = config.get(CONF_MARTS)
-
-    sensors = []
-
-    for mart in marts:
-        if mart[CONF_MART_KIND] == 'e':
-            try:
-                eAPI    = EMartAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], mart[CONF_AREA] )
-                eSensor = EMartSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], eAPI )
-                eSensor.update()
-                sensors += [eSensor]
-            except Exception as ex:
-                _LOGGER.error('Failed to update EMart API status Error: %s', ex)
-
-        if mart[CONF_MART_KIND] == 'l':
-            try:
-                lotteAPI    = LotteMartAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
-                lotteSensor = LotteMartSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], lotteAPI )
-                lotteSensor.update()
-                sensors += [lotteSensor]
-            except Exception as ex:
-                _LOGGER.error('Failed to update LotteMart API status Error: %s', ex)
-
-        if mart[CONF_MART_KIND] == 'h':
-            try:
-                homeplusAPI    = HomeplusAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
-                homeplusSensor = HomeplusSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], homeplusAPI )
-                homeplusSensor.update()
-                sensors += [homeplusSensor]
-            except Exception as ex:
-                _LOGGER.error('Failed to update Homeplus API status Error: %s', ex)
-
-        if mart[CONF_MART_KIND] == 'c':
-            try:
-                costcoAPI     = CostcoAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE] )
-                costcoSensor  = CostcoSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], costcoAPI )
-                costcoSensor.update()
-                sensors += [costcoSensor]
-            except Exception as ex:
-                _LOGGER.error('Failed to update Costco API status Error: %s', ex)
-
-        if mart[CONF_MART_KIND] == 'g':
-            try:
-                gssuperAPI      = GssuperAPI( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE])
-                gssuperSensor   = GssuperSensor( mart[CONF_MART_KIND], mart[CONF_NAME], mart[CONF_MART_CODE], gssuperAPI)
-                gssuperSensor.update()
-                sensors += [gssuperSensor]
-            except Exception as ex:
-                _LOGGER.error('Failed to update GS SuperMart API status Error: %s', ex)
-
-    add_entities(sensors, True)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Add a entity from a config_entry."""
@@ -609,7 +546,7 @@ class EMartSensor(Entity):
             self._holidate = holiday_1
 
         #self._holidate = holidate
-        
+
         #휴무일이 현재일자보다 이후면 '-'로 상태표시
         if ( self._holidate != '-' and dt > Comm2Date(self._holidate) ):
             self._holidate = '-'
@@ -659,60 +596,47 @@ class LotteMartAPI:
         try:
             dt = datetime.now()
 
-            pYear  = dt.strftime("%Y")
-            pMonth = dt.strftime("%m")
-
-            url = LMART_BSE_URL
+            url = LMART_SEARCH_URL
             url = url.format(self._brnchCd)
 
             session = async_get_clientsession(self._hass)
 
-            response = await session.get(url, timeout=30)
+            response = await session.post(url, timeout=30)
             response.raise_for_status()
 
-            json_data = await response.json()
+            html = await response.text()
 
-            lmart = json_data['data']
+            soup = BeautifulSoup(html, "lxml")
 
-            lmart_dict ={}
 
-            holidate = lmart['holiDate']
+            day_off = soup.select_one('span.day-off').text
+            address = soup.select_one('div.address').text
+
+            time = soup.select_one('span.time').text
+            call = soup.select_one('span.call').text
+
+            dict ={}
+
+            holidate = day_off
 
             # 00/00 처리
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
 
-            # 00/00,/00 처리
-            if len(rtn) == 1:
-                r = re.compile(",/\d{1,2}")
-                rtn.insert(1, rtn[0].split("/")[0] + r.findall(holidate)[0][1:])
-
-            # 00월 00일 처리
-            if len(rtn) == 0:
-                rk = re.compile("\d+월 \d+일")
-                rtn = rk.findall(holidate)
-
-            # 00월00일 처리
-            if len(rtn) == 0:
-                rk = re.compile("\d+월\d+일")
-                rtn = rk.findall(holidate)
-
-            # 0.0 처리
-            if len(rtn) == 0:
-                rk = re.compile("\d+\.\d+")
-                rtn = rk.findall(holidate)
-
-            lmart_dict[self._brnchCd]= {
+            dict[self._brnchCd]= {
                 'id'       : self._brnchCd,
-                'name'     : lmart['strNm'],
+                'name'     : self._brnchCd,
 
-                'holidate' : lmart['holiDate'],
+                'address'  : address,
+                'bussiness_hours'     : time,
+                'tel'      : call,
+
+                'holidate' :  holidate,
                 'holiday_1' : ConvertLmartToComm(rtn[0]),
-                'holiday_2' : ConvertLmartToComm(rtn[1])
+                'holiday_2' : (ConvertLmartToComm(rtn[1]) if len(rtn) > 1 else None)
             }
 
-            self.result = lmart_dict
-            #_LOGGER.debug('LotteMart API Request Result: %s', self.result)
+            self.result = dict
         except Exception as ex:
             _LOGGER.error('Failed to update LotteMart API status Error: %s', ex)
             raise
