@@ -51,14 +51,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     mart_code = config_entry.data[CONF_MART_CODE]
     mart_name = config_entry.data[CONF_NAME]
 
-    area = config_entry.data[CONF_AREA] or ''
-
     sensors = []
 
     if mart_kind == 'e':
         try:
 #            eAPI    = EMartAPI( hass, mart_kind, mart_name, mart_code, area )
-            eAPI    = EMartImsiAPI( hass, mart_kind, mart_name, mart_code, area )
+            eAPI    = EMartImsiAPI( hass, mart_kind, mart_name, mart_code )
             eSensor = EMartSensor( mart_kind, mart_name, mart_code, eAPI )
             await eSensor.async_update()
             sensors += [eSensor]
@@ -401,13 +399,12 @@ class EMartAPI:
 
 class EMartImsiAPI:
     """EMart API."""
-    def __init__(self, hass, mart_kind, name, mart_code, area):
+    def __init__(self, hass, mart_kind, name, mart_code):
         """Initialize the EMart API."""
         self._hass      = hass
         self._mart_kind = mart_kind
         self._name      = name
         self._mart_code = mart_code
-        self._area      = area
         self.result     = {}
 
     async def update(self):
@@ -460,7 +457,6 @@ class EMartImsiAPI:
             emart_dict[self._mart_code] = {
                         'jijum_id': self._mart_code,
                         'name'    : self._name,
-                        'area'    : _AREA[self._area],
 
                         'holiday_1' : ConvertLmartToComm(holi1) if len(rtn) > 0 else holi1,
                         'holiday_2' : ConvertLmartToComm(holi2) if len(rtn) > 1 else holi2,
