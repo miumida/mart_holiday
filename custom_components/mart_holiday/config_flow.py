@@ -24,7 +24,6 @@ class MartHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._mart_kind: Required[str] = None
         self._mart_code: Required[str] = None
         self._name: Required[str]      = None
-        self._area: Optional[str]      = 'N/A'
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -34,7 +33,6 @@ class MartHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._mart_kind = user_input[CONF_MART_KIND]
             self._mart_code = user_input[CONF_MART_CODE]
             self._name      = user_input[CONF_NAME]
-            self._area      = user_input[CONF_AREA] or 'N/A'
 
             uuid = 'mart-holiday-{}-{}'.format(self._mart_kind, self._mart_code)
             await self.async_set_unique_id(uuid)
@@ -60,7 +58,6 @@ class MartHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_MART_KIND, default=None): vol.In(_MART_KIND),
                 vol.Required(CONF_MART_CODE, default=None): str,
                 vol.Required(CONF_NAME,      default=None): str,
-                vol.Optional(CONF_AREA,      default='N/A'): vol.In(_AREA),
             }
         )
 
