@@ -51,29 +51,12 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 - HACS > INTEGRATIONS 메뉴 선택 후, 검색하여 설치
 <br><br>
 ## Usage
-### configuration
-- HA 설정에 대형마트 휴무일 sensor를 추가합니다.<br>
-```yaml
-sensor:
-- platform: mart_holiday
-  marts:
-    - mart_kind: 'e'
-      name: '창원점'
-      mart_code: '1059'
-      area: 'J'
-    - mart_kind: 'l'
-      name: '창원중앙점'
-      mart_code: '0100161'
-    - mart_kind: 'h'
-      name: '창원점'
-      mart_code: '0017'
-    - mart_kind: 'c'
-      name: '대구점'
-      mart_code: '01'
-    - mart_kind: 'g'
-      name: '포항죽도점'
-      mart_code: 12021
-```
+### Custom Integration
+- 구성 > 통합구성요소 > 통합구성요소 추가하기 > 대형마트휴무일 선택 > 설정값 입력 후, 확인.
+
+### Configuration(yaml) : Custom Integration으로 등록해주세요!
+- HA설정에 대형마트 휴무일 센서를 추가합니다<br>
+- v1.1.7 이상부터는 통합구성요소만 지원합니다.<br>
 
 ### 센서별 설정값
 
@@ -113,10 +96,8 @@ sensor:
 - 롯데마트 지점찾기 페이지로 접속하여 원하는 롯데마트 지점을 검색한다.<br>
   지점찾기 페이지 : http://company.lottemart.com/shop/shop_search_type.asp?#schWord
 ![lotte_search_1](https://github.com/miumida/martholiday/blob/master/img/lotte_search_1.png)<br>
-- 조회된 목록에서 원하는 지점의 '지점사이트' 버튼을 클릭한다.
+- 조회된 목록에서 원하는 지점의 지점명과 동일하게 마트코드로 사용한다.
 ![lotte_search_2](https://github.com/miumida/martholiday/blob/master/img/lotte_search_2.png)<br>
-- 지점사이트가 열리면 주소창에 마지막 부분의 brnchCd=0100161에서 = 뒤에 있는 `0100161`를 마트코드로 사용한다.
-![lotte_search_3](https://github.com/miumida/martholiday/blob/master/img/lotte_search_3.png)<br>
 <br><br>
 #### Homeplus
 - 홈플러스 매장명 찾기를 통해 원하는 홈플러스 매장을 검색한다<br>
