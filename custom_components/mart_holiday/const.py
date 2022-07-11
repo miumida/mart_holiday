@@ -1,6 +1,6 @@
 DOMAIN   = 'mart_holiday'
 PLATFORM = 'sensor'
-SW_VERSION = '1.1.6'
+SW_VERSION = '1.1.7'
 MANUFACT   = 'miumida'
 MODEL = '대형마트 휴무일'
 
@@ -54,3 +54,15 @@ _COSTCO_STORES = {
   '15': ['일산점',          2, 2],
   '16': ['의정부점',        6, 6],
 }
+
+LMART_SEARCH_URL = "http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}"
+LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
+
+EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}'
+EMART_IMSI_URL = 'https://emartapp.emart.com/branch/view.do?id={}'
+
+HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
+HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
+
+GSSUPER_BSE_URL = 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}'
+
