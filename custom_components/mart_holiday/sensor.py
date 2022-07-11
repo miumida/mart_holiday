@@ -122,6 +122,9 @@ def ConvertEmartToComm(val):
 
 #롯데마트 날짜 형식 변환
 def ConvertLmartToComm(val):
+    if val is None:
+        return '-'
+
     dt = datetime.now()
 
     pYear  = dt.strftime("%Y")
@@ -228,6 +231,9 @@ def ConvertGssuperToComm(val):
 
 # 문자 YYYY-MM-DD를 datetime으로 형변환
 def Comm2Date(val):
+    if val is None:
+        return None
+
     tmp = val.split("-")
 
     if len(tmp) > 1:
@@ -615,9 +621,13 @@ class LotteMartAPI:
 
             holidate = day_off
 
+            #_LOGGER.error(f'[{DOMAIN}] holidate, %s', holidate)
+
             # 00/00 처리
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
+
+            _LOGGER.error(f'[{DOMAIN}] rtn, %s', len(rtn))
 
             dict[self._brnchCd]= {
                 'id'       : self._brnchCd,
