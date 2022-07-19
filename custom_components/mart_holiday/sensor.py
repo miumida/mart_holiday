@@ -627,7 +627,7 @@ class LotteMartAPI:
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
 
-            _LOGGER.error(f'[{DOMAIN}] rtn, %s', len(rtn))
+            _LOGGER.debug(f'[{DOMAIN}] rtn, %s', len(rtn))
 
             dict[self._brnchCd]= {
                 'id'       : self._brnchCd,
