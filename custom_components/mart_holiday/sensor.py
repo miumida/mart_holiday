@@ -621,13 +621,9 @@ class LotteMartAPI:
 
             holidate = day_off
 
-            #_LOGGER.error(f'[{DOMAIN}] holidate, %s', holidate)
-
             # 00/00 처리
             r = re.compile("\d{1,2}\/\d{1,2}")
             rtn = r.findall(holidate)
-
-            _LOGGER.error(f'[{DOMAIN}] rtn, %s', len(rtn))
 
             dict[self._brnchCd]= {
                 'id'       : self._brnchCd,
