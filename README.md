@@ -1,7 +1,7 @@
 # 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor
 
 ![HAKC)][hakc-shield]
-![Version v1.1.4][version-shield]
+![Version v1.1.11][version-shield]
 
 주말에 마트 가도 될까요?(대형마트 휴무일) Sensor for Home Assistant<br>
 E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주는 Home Assistant Sensor 입니다.<br>
@@ -34,6 +34,7 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 | v1.1.5    | 2022.06.27  | Fix bug |
 | v1.1.6    | 2022.07.08  | bs4 requirement version 변경 |
 | v1.1.10    | 2022.07.12  | 롯데마트 홈페이지 개편에 따른 휴무일로직 변경 |
+| v1.1.11    | 2022.08.26  | 코스트코 김해점  |
 
 
 <br><br>
@@ -108,16 +109,16 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 ![homeplus_search_2](https://github.com/miumida/martholiday/blob/master/img/homeplus_search_2.png)<br>
 <br><br>
 #### Costco
-|코드|마트명|코드|마트명|
-|--|-------------|--|-------------|
-|01|대전점|09|양재점|
-|02|대구점|10|광명점|
-|03|세종점|11|하남점|
-|04|대구 혁신도시점|12|송도점|
-|05|천안점|13|양평점|
-|06|부산점|14|상봉점|
-|07|울산점|15|일산점|
-|08|공세점|16|의정부점|
+|코드|마트명|코드|마트명|코드|마트명|
+|--|-------------|--|-------------|--|-------------|
+|01|대전점|09|양재점|17|김해점|
+|02|대구점|10|광명점|||
+|03|세종점|11|하남점|||
+|04|대구 혁신도시점|12|송도점|||
+|05|천안점|13|양평점|||
+|06|부산점|14|상봉점|||
+|07|울산점|15|일산점|||
+|08|공세점|16|의정부점|||
 - 코스트코는 매장이 현재 16개로 홈페이지에서 정보를 가져와서 휴무일을 표시하지 않는다.
 - 코스트코 홈페이지에 나와있는 16개의 매장을 기준으로 2자리 숫자로 단순히 코드로 사용한다.
   해당 지점에 대해서는 코드표를 확인하여, mart_code에 사용한다.
@@ -134,5 +135,5 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 - 저장장치님 이마트 휴무일 찾는 부분 아이디어 제공해주셔서 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.1.10-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.1.11-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
