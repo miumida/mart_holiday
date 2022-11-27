@@ -237,7 +237,7 @@ def Comm2Date(val):
     tmp = val.split("-")
 
     if len(tmp) > 1:
-        return datetime(year=int(tmp[0]), month=int(tmp[1]), day=int(tmp[2]))
+        return datetime(year=int(tmp[0]), month=int(tmp[1]), day=int(tmp[2]), hour=23, minute=59, second=59)
     else:
         return None
 
