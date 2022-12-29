@@ -1,6 +1,6 @@
 DOMAIN   = 'mart_holiday'
 PLATFORM = 'sensor'
-SW_VERSION = '1.1.12'
+SW_VERSION = '1.1.13'
 MANUFACT   = 'miumida'
 MODEL = '대형마트 휴무일'
 
@@ -54,6 +54,7 @@ _COSTCO_STORES = {
   '15': ['일산점',          2, 2],
   '16': ['의정부점',        6, 6],
   '17': ['김해점',          6, 6],
+  '18': ['고척점',          6, 6],
 }
 
 LMART_SEARCH_URL = "http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}"
