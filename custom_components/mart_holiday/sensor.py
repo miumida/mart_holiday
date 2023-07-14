@@ -577,7 +577,7 @@ class EMartSensor(Entity):
             "name": "대형마트 휴무일(E마트)",
             "sw_version": SW_VERSION,
             "via_device": (DOMAIN, self._mart_code),
-            "DeviceEntryType": "service",
+            "entry_type": "service",
         }
 
 
@@ -729,7 +729,7 @@ class LotteMartSensor(Entity):
             "name": "대형마트 휴무일(롯데마트)",
             "sw_version": SW_VERSION,
             "via_device": (DOMAIN, self._brnchCd),
-            "DeviceEntryType": "service",
+            "entry_type": "service",
         }
 
 class HomeplusAPI:
@@ -889,7 +889,7 @@ class HomeplusSensor(Entity):
             "name": "대형마트 휴무일(Homeplus)",
             "sw_version": SW_VERSION,
             "via_device": (DOMAIN, self._mart_code),
-            "DeviceEntryType": "service",
+            "entry_type": "service",
         }
 
 
@@ -1079,7 +1079,7 @@ class CostcoSensor(Entity):
             "name": "대형마트 휴무일(Costco)",
             "sw_version": SW_VERSION,
             "via_device": (DOMAIN, self._mart_code),
-            "DeviceEntryType": "service",
+            "entry_type": "service",
         }
 
 
@@ -1222,5 +1222,5 @@ class GssuperSensor(Entity):
             "name": "대형마트 휴무일(GS슈퍼마켓)",
             "sw_version": SW_VERSION,
             "via_device": (DOMAIN, self._mart_code),
-            "DeviceEntryType": "service",
+            "entry_type": "service",
         }
