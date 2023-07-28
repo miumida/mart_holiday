@@ -1,6 +1,6 @@
 DOMAIN   = 'mart_holiday'
 PLATFORM = 'sensor'
-SW_VERSION = '1.1.13'
+SW_VERSION = '1.1.14'
 MANUFACT   = 'miumida'
 MODEL = '대형마트 휴무일'
 
