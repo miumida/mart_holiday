@@ -84,7 +84,7 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 ### 마트별 코드 확인(mart_code)
 마트에 따라 마트코드를 확인하는 방법은 아래와 같다.
 #### E마트
-- 모바일에서 점포찾기(https://eapp.emart.com/branch/view.do) 페이지에 접속 후, 원하는 지점 검색.<br>
+- 모바일에서 점포찾기(https://eapp.emart.com/branch/main.do) 페이지에 접속 후, 원하는 지점 검색.<br>
 - 지점 상세페이지로 클릭하여 들어가서 주소창에 id={지점코드}를 코드로 입력.
 <br><br>
 #### 롯데마트
