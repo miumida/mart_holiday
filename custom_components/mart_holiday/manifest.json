@@ -1,6 +1,6 @@
 {
   "domain": "mart_holiday",
-  "name": "mart_holiday",
+  "name": "대형마트 휴무일",
   "documentation": "https://github.com/miumida/mart_holiday",
   "requirements": ["xmltodict==0.12.0", "beautifulsoup4==4.9.3"],
   "dependencies": [],
