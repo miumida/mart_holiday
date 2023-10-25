@@ -1,8 +1,8 @@
-DOMAIN   = 'mart_holiday'
-PLATFORM = 'sensor'
-SW_VERSION = '1.1.15'
+DOMAIN     = 'mart_holiday'
+PLATFORM   = 'sensor'
+SW_VERSION = '1.2.0'
 MANUFACT   = 'miumida'
-MODEL = '대형마트 휴무일'
+MODEL      = '대형마트 휴무일'
 
 _MART_KIND = {
     'e' : 'E마트',
@@ -12,35 +12,52 @@ _MART_KIND = {
     'g' : 'GS슈퍼마켓',
 }
 
+_MART_URL = {
+    'e' : 'https://emartapp.emart.com/branch/view.do?id={}',
+    'l' : 'http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}',
+    'h' : 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS',
+    'c' : '',
+    'g' : 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}',
+}
+
+_MART_NAME = {
+    'e' : 'E마트({})',
+    'l' : '롯데마트({})',
+    'h' : 'Homeplus({})',
+    'c' : 'Costco({})',
+    'g' : 'GS슈퍼마켓({})',
+}
+
 CONF_MART_KIND = 'mart_kind'
 CONF_MART_CODE = 'mart_code'
 CONF_NAME = 'name'
 CONF_AREA = 'area'
 
-_AREA = {
-    'N/A': 'N/A',
-    'A' : '서울',
-    'C' : '인천',
-    'I' : '경기',
-    'F' : '대전',
-    'Q' : '세종',
-    'N' : '충청',
-    'D' : '대구',
-    'J' : '경상',
-    'G' : '울산',
-    'B' : '부산',
-    'L' : '전라',
-    'E' : '광주',
-    'H' : '강원',
-    'P' : '제주',
-}
+DEFAULT_MART_ALPHA_ICON = 'mdi:alpha-{}-box'
+
+ATTR_NAME = 'name'
+ATTR_ID   = 'id'
+ATTR_TEL  = 'tel'
+ATTR_ADDR = 'address'
+
+ATTR_HOLIDAY = 'holiday'
+ATTR_HOLIDAY_1 = 'holiday_1'
+ATTR_HOLIDAY_2 = 'holiday_2'
+ATTR_HOLIDAY_3 = 'holiday_3'
+ATTR_HOLIDAY_4 = 'holiday_4'
+
+ATTR_NEXT_HOLIDAY = 'next_holiday'
+ATTR_HOLIDATE = 'holidate'
+
+ATTR_BUSSINESS_HOURS = 'bussiness_hours'
+ATTR_OPERTIME = 'opertime'
 
 #COSTCO 매장별 휴무일
 _COSTCO_STORES = {
   '01': ['대전점',          6, 6],
   '02': ['대구점',          6, 6],
   '03': ['세종점',          6, 6],
-  '04': ['대구 혁신도시점', 6, 6],
+  '04': ['대구 혁신도시점',  6, 6],
   '05': ['천안점',          6, 6],
   '06': ['부산점',          6, 6],
   '07': ['울산점',          2, 6],
@@ -60,11 +77,9 @@ _COSTCO_STORES = {
 LMART_SEARCH_URL = "http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}"
 LMART_BSE_URL = 'http://company.lottemart.com/bc/branch/storeinfo.json?brnchCd={}'
 
-EMART_BSE_URL = 'https://emartapp.emart.com/menu/holiday_ajax.do?areaCd={}&year={}&month={}'
 EMART_IMSI_URL = 'https://emartapp.emart.com/branch/view.do?id={}'
 
 HOMEPLUS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS'
 HOMEPLUS_EXPRESS_BSE_URL = 'http://corporate.homeplus.co.kr/STORE/HyperMarket_Express_view.aspx?sn={}&ind=EXPRESS'
 
 GSSUPER_BSE_URL = 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}'
-
