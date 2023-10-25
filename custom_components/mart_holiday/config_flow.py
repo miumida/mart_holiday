@@ -9,7 +9,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import (CONF_SCAN_INTERVAL)
 
-from .const import DOMAIN, _MART_KIND, CONF_MART_KIND, CONF_MART_CODE, CONF_AREA, _AREA, CONF_NAME
+from .const import DOMAIN, _MART_KIND, CONF_MART_KIND, CONF_MART_CODE, CONF_AREA, CONF_NAME
 
 _LOGGER = logging.getLogger(__name__)
 
