@@ -38,6 +38,7 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 | v1.1.12    | 2022.12.02  | 이마트 휴일처리 수정  |
 | v1.1.13    | 2022.12.29  | 코스트코 고척점 코드추가  |
 | v1.1.14    | 2023.07.29  | README 수정  |
+| v1.2.0    | 2023.10.26  | 수정  |
 
 <br><br>
 ## Installation
@@ -129,5 +130,5 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 - 별명짓기귀찮음님 GS슈퍼마켓 소스제공 감사합니다:D
 - 저장장치님 이마트 휴무일 찾는 부분 아이디어 제공해주셔서 감사합니다:D
 
-[version-shield]: https://img.shields.io/badge/version-v1.1.15-orange.svg
+[version-shield]: https://img.shields.io/badge/version-v1.2.0-orange.svg
 [hakc-shield]: https://img.shields.io/badge/HAKC-Enjoy-blue.svg
