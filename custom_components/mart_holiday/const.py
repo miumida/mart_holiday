@@ -1,5 +1,5 @@
 DOMAIN     = 'mart_holiday'
-PLATFORM   = 'sensor'
+PLATFORM   = [ "sensor" ]
 SW_VERSION = '1.2.0'
 MANUFACT   = 'miumida'
 MODEL      = '대형마트 휴무일'
