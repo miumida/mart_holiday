@@ -250,7 +250,7 @@ class martAPI:
 
         holi = contents[0].text.strip()
 
-        r = re.compile("\d{1,2}\/\d{1,2}")
+        r = re.compile(r"\d{1,2}\/\d{1,2}")
         rtn = r.findall(holi)
 
         holi1 = '-'
@@ -300,7 +300,7 @@ class martAPI:
         holidate = day_off
 
         # 00/00 처리
-        r = re.compile("\d{1,2}\/\d{1,2}")
+        r = re.compile(r"\d{1,2}\/\d{1,2}")
         rtn = r.findall(holidate)
 
         dict[self._mart_code]= {
@@ -333,7 +333,7 @@ class martAPI:
         opertime = tds[3].get_text().strip()
 
         #휴무일 추출 : 2019-03-24 형태의 값만 추출한다.
-        r = re.compile("\d{4}-\d{2}-\d{2}")
+        r = re.compile(r"\d{4}-\d{2}-\d{2}")
 
         rtn = r.findall(holiday)
 
