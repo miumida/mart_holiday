@@ -142,12 +142,16 @@ def ConvertLmartToComm(val):
                 rslt = COMM_DATE_FORMAT.format(pYear, tmpNone[0], tmpNone[1])
                 return rslt
 
-
+        # 0/0 처리
         elif len(tmp) == 2:
             if len(tmp[0]) == 1:
                 tmp[0] = '0' + tmp[0]
             if len(tmp[1]) == 1:
                 tmp[1] = '0' + tmp[1]
+
+            if ( pMonth == '12' and tmp[0] == '01' ):
+                pYear = str(int(pYear) + 1)
+            
             rslt = COMM_DATE_FORMAT.format(pYear, tmp[0], tmp[1])
             return rslt
 
