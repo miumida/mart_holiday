@@ -74,6 +74,7 @@ _COSTCO_STORES = {
   '16': ['의정부점',        6, 6],
   '17': ['김해점',          6, 6],
   '18': ['고척점',          6, 6],
+  '19': ['청라점',          6, 6],
 }
 
 LMART_SEARCH_URL = "http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}"
