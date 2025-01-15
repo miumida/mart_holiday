@@ -1,6 +1,6 @@
 DOMAIN     = 'mart_holiday'
 PLATFORM   = [ "sensor" ]
-SW_VERSION = '1.2.1'
+SW_VERSION = '1.2.2'
 MANUFACT   = 'miumida'
 MODEL      = '대형마트 휴무일'
 
@@ -14,7 +14,7 @@ _MART_KIND = {
 
 _MART_URL = {
     'e' : 'https://emartapp.emart.com/branch/view.do?id={}',
-    'l' : 'http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}',
+    'l' : 'http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=&schWord={}',
     'h' : 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS',
     'c' : '',
     'g' : 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}',
@@ -51,6 +51,8 @@ ATTR_HOLIDATE = 'holidate'
 
 ATTR_BUSSINESS_HOURS = 'bussiness_hours'
 ATTR_OPERTIME = 'opertime'
+
+ATTR_DAYOFF = 'day-off'
 
 #COSTCO 매장별 휴무일
 _COSTCO_STORES = {
