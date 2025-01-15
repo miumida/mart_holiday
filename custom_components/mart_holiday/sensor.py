@@ -551,7 +551,7 @@ class martAPI:
         #현재 날짜 가져오기
         curr = datetime.today()
         
-        next_dates = [date for date in arr if date >= curr ]
+        next_dates = [date for date in sorted(arr) if date >= curr ]
         
         #결과가 없으면 None을 반환
         if not next_dates:
