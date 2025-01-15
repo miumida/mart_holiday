@@ -94,7 +94,7 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
   지점찾기 페이지 : http://company.lottemart.com/shop/shop_search_type.asp?#schWord
 ![lotte_search_1](https://github.com/miumida/mart_holiday/blob/master/img/lotte_search_n_1.png?raw=true)<br>
 - 조회된 목록에서 원하는 지점의 지점명과 동일하게 마트코드로 사용한다.
-![lotte_search_2](https://github.com/miumida/mart_holiday/blob/master/img/lotte_search_n_2.png?raw=true)<<br>
+![lotte_search_2](https://github.com/miumida/mart_holiday/blob/master/img/lotte_search_n_2.png?raw=true)<br>
 <br><br>
 #### Homeplus
 - 홈플러스 매장명 찾기를 통해 원하는 홈플러스 매장을 검색한다<br>
