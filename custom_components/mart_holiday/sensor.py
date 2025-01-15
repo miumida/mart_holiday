@@ -19,7 +19,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
 
 from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MODEL, MANUFACT, _MART_KIND, _MART_URL, _MART_NAME, LMART_SEARCH_URL, EMART_IMSI_URL, LMART_BSE_URL, HOMEPLUS_BSE_URL, HOMEPLUS_EXPRESS_BSE_URL,GSSUPER_BSE_URL
-from .const import ATTR_NAME, ATTR_ID, ATTR_TEL, ATTR_ADDR, ATTR_HOLIDAY, ATTR_HOLIDAY_1, ATTR_HOLIDAY_2, ATTR_HOLIDAY_3, ATTR_HOLIDAY_4, ATTR_NEXT_HOLIDAY, ATTR_BUSSINESS_HOURS, ATTR_OPERTIME, ATTR_HOLIDATE, DEFAULT_MART_ALPHA_ICON
+from .const import ATTR_NAME, ATTR_ID, ATTR_TEL, ATTR_ADDR, ATTR_HOLIDAY, ATTR_HOLIDAY_1, ATTR_HOLIDAY_2, ATTR_HOLIDAY_3, ATTR_HOLIDAY_4, ATTR_NEXT_HOLIDAY, ATTR_BUSSINESS_HOURS, ATTR_OPERTIME, ATTR_HOLIDATE, ATTR_DAYOFF, DEFAULT_MART_ALPHA_ICON
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -269,6 +269,11 @@ class martAPI:
 
         if len(rtn) > 2:
             holi3 = rtn[2]
+            
+        arr_holi = []
+        
+        for day in rtn:
+            arr_holi.append(self.s2d(ConvertLmartToComm(day)))
 
         dt = datetime.now()
 
@@ -281,6 +286,7 @@ class martAPI:
                     ATTR_ID   : self._mart_code,
                     ATTR_NAME : self._mart_name,
 
+                    ATTR_HOLIDATE  : self.get_next_holiday(arr_holi, True),
                     ATTR_HOLIDAY_1 : ConvertLmartToComm(holi1) if len(rtn) > 0 else holi1,
                     ATTR_HOLIDAY_2 : ConvertLmartToComm(holi2) if len(rtn) > 1 else holi2,
                     ATTR_HOLIDAY_3 : ConvertLmartToComm(holi3) if len(rtn) > 2 else holi3,
@@ -306,6 +312,13 @@ class martAPI:
         # 00/00 처리
         r = re.compile(r"\d{1,2}\/\d{1,2}")
         rtn = r.findall(holidate)
+        
+        arr_holi = []
+        
+        for day in rtn:
+            arr_holi.append(self.s2d(ConvertLmartToComm(day)))
+            
+        holidate = self.get_next_holiday(arr_holi, True)
 
         dict[self._mart_code]= {
             ATTR_ID    : self._mart_code,
@@ -314,6 +327,7 @@ class martAPI:
 
             ATTR_ADDR  : address,
             ATTR_BUSSINESS_HOURS  : time,
+            ATTR_DAYOFF: day_off,
             
             ATTR_HOLIDATE :  holidate,
             ATTR_HOLIDAY_1 : ConvertLmartToComm(rtn[0]),
@@ -355,45 +369,73 @@ class martAPI:
         }
 
         # 휴무이을 딕셔너리에 추가
+        arr_holi = []
         cnt = 1
         for tmp in rtn:
             dict[self._mart_code].update( {'holiday_{}'.format(str(cnt)):tmp} )
+            arr_holi.append(self.s2d(tmp))
             cnt += 1
+            
+        dict[self._mart_code].update( {ATTR_HOLIDATE:self.get_next_holiday(arr_holi, True)} )
 
         self.result = dict
 
 
     def parseGSSuper(self, html):
-        results = json_results['results']
+        results = html['results']
 
+        arr_holi = []
         dict = {}
 
         for itm in results:
             if itm['shopCode'] != self._mart_code:
                 continue
+            
+            close1 = ConvertGssuperToComm(itm['closedDate1'])
+            close2 = ConvertGssuperToComm(itm['closedDate2'])
+            close3 = ConvertGssuperToComm(itm['closedDate3'])
+            close4 = ConvertGssuperToComm(itm['closedDate4'])
+            
+            if close1 is not None:
+                arr_holi.append(self.s2d(close1))
+            
+            if close2 is not None:
+                arr_holi.append(self.s2d(close2))
+            
+            if close3 is not None:
+                arr_holi.append(self.s2d(close3))
+            
+            if close4 is not None:
+                arr_holi.append(self.s2d(close4))
+            
+            holidate = self.get_next_holiday(arr_holi, True)
 
             dict[itm['shopCode']] = {
                 ATTR_ID     : itm['shopCode'],
                 ATTR_NAME   : itm['shopName'],
                 ATTR_TEL    : itm['phone'],
                 ATTR_ADDR   : itm['address'],
+                
+                ATTR_HOLIDATE  : holidate,
 
-                ATTR_HOLIDAY_1 : ConvertGssuperToComm(itm['closedDate1']),
-                ATTR_HOLIDAY_2 : ConvertGssuperToComm(itm['closedDate2']),
-                ATTR_HOLIDAY_3 : ConvertGssuperToComm(itm['closedDate3']),
-                ATTR_HOLIDAY_4 : ConvertGssuperToComm(itm['closedDate4']),
+                ATTR_HOLIDAY_1 : close1,
+                ATTR_HOLIDAY_2 : close2,
+                ATTR_HOLIDAY_3 : close3,
+                ATTR_HOLIDAY_4 : close4,
             }
 
         self.result = dict
 
 
-    def calcCostco(self):
+    def calcCostco(self, year=None, month=None):
         """Update function for updating api information."""
         try:
+            arr_holi = []
+            
             dt = datetime.now()
 
-            pYear  = dt.strftime("%Y")
-            pMonth = dt.strftime("%m")
+            pYear  = dt.strftime("%Y") if year is None else year
+            pMonth = dt.strftime("%m") if month is None else month
 
             nowDt = dt.strftime("%d")
 
@@ -402,14 +444,18 @@ class martAPI:
             monthInfo = calendar.monthrange(int(pYear), int(pMonth))
 
             data_1st = datetime(year=int(pYear), month=int(pMonth), day=1)
+            
+            # 1월은 1/1일을 무조건 휴무일로 처리
+            if ( int(pMonth) == 1 ):
+                arr_holi.append(data_1st)
 
             costco_nm = _COSTCO_STORES[self._mart_code][0]
             costco_1st_holiday = _COSTCO_STORES[self._mart_code][1]
             costco_2nd_holiday = _COSTCO_STORES[self._mart_code][2]
 
             #둘째주
-            addCnt_1st = 0;
-            addCnt_2nd = 0;
+            addCnt_1st = 0
+            addCnt_2nd = 0
 
             if monthInfo[0] != costco_1st_holiday:
                 for i in range(1,7):
@@ -429,44 +475,48 @@ class martAPI:
                             addCnt_2nd = diff.days
 
             month_tmp_1 = []
-            i = addCnt_1st;
+            i = addCnt_1st
             while i < monthInfo[1]:
                 if i > monthInfo[1]:
-                    break;
+                    break
 
                 tmp = data_1st + timedelta(days=i)
 
                 month_tmp_1.append(tmp)
 
-                i = i + 7;
+                i = i + 7
 
             #넷째주
             month_tmp_2 = []
-            i = addCnt_2nd;
+            i = addCnt_2nd
             while i < monthInfo[1]:
                 if i > monthInfo[1]:
-                    break;
+                    break
 
                 tmp = data_1st + timedelta(days=i)
 
                 month_tmp_2.append(tmp)
 
-                i = i + 7;
+                i = i + 7
 
             #휴무일
             holiday_1 = month_tmp_1[1]
             holiday_2 = month_tmp_2[3]
+            
+            arr_holi.append(month_tmp_1[1])
+            arr_holi.append(month_tmp_2[3])
 
             #가까운 휴무일 지정
-            holidate = holiday_1 if holiday_1.strftime("%d") >= nowDt else holiday_2
+            holidate = self.get_next_holiday(arr_holi, True)
 
             mart_dict[self._mart_code]= {
                 ATTR_ID       : self._mart_code,
                 ATTR_NAME     : self._mart_name,
 
-                ATTR_HOLIDATE   : holidate.strftime("%Y-%m-%d"),
-                ATTR_HOLIDAY_1  : holiday_1.strftime("%Y-%m-%d"),
-                ATTR_HOLIDAY_2  : holiday_2.strftime("%Y-%m-%d"),
+                ATTR_HOLIDATE   : holidate,
+                ATTR_HOLIDAY_1  : self.d2s(arr_holi[0]),
+                ATTR_HOLIDAY_2  : self.d2s(arr_holi[1]),
+                ATTR_HOLIDAY_3  : (self.d2s(arr_holi[2]) if len(arr_holi) > 2 else '-'),
             }
 
             self.result = mart_dict
@@ -474,6 +524,41 @@ class martAPI:
         except Exception as ex:
             _LOGGER.error('Failed to update Costco API status Error: %s', ex)
             raise
+        
+    def d2s(self, val):
+        if val is None:
+            return None
+        
+        if isinstance(val, str):
+            val = datetime.strptime(val, "%Y-%m-%d")
+        elif isinstance(val, datetime):
+            pass
+        else:
+            return None
+        
+        return val.strftime("%Y-%m-%d")
+    
+    def s2d(self, val):
+        if val is None:
+            return None
+        
+        if isinstance(val, str):
+            return datetime.strptime(val, "%Y-%m-%d")
+        else:
+            return None
+        
+    def get_next_holiday(self, arr, text=False):
+        #현재 날짜 가져오기
+        curr = datetime.today()
+        
+        next_dates = [date for date in arr if date >= curr ]
+        
+        #결과가 없으면 None을 반환
+        if not next_dates:
+            return None
+
+        #결과가 있으면 첫 번째 날짜를 반환
+        return self.d2s(next_dates[0]) if text else next_dates[0]
 
 
 class martSensor(Entity):
@@ -519,22 +604,7 @@ class martSensor(Entity):
         await self._api.update()
         marts_dict = self._api.result
 
-        holiday_1 = marts_dict[self._mart_code].get(ATTR_HOLIDAY_1, '')
-        holiday_2 = marts_dict[self._mart_code].get(ATTR_HOLIDAY_2, '')
-
-        dt = datetime.now()
-
-        if holiday_2 != '-':
-            dt_holiday_1 = Comm2Date(holiday_1)
-            dt_holiday_2 = Comm2Date(holiday_2)
-
-            self._holidate = holiday_1 if dt <= dt_holiday_1 + timedelta(days=1) else holiday_2
-        else:
-            self._holidate = holiday_1
-
-        #휴무일이 현재일자보다 이후면 '-'로 상태표시
-        if ( self._holidate != '-' and dt > Comm2Date(self._holidate) ):
-            self._holidate = '-'
+        self._holidate = marts_dict[self._mart_code].get(ATTR_HOLIDATE, '-')
 
         self.marts = marts_dict
 
