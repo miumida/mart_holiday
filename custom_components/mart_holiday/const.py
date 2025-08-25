@@ -15,7 +15,7 @@ _MART_KIND = {
 _MART_URL = {
     'e' : 'https://emartapp.emart.com/branch/view.do?id={}',
     'l' : 'http://company.lottemart.com/shop/shop_search_type.asp?schArea=&schType=01&schWord={}',
-    'h' : 'http://corporate.homeplus.co.kr/STORE/HyperMarket_view.aspx?sn={}&ind=HOMEPLUS',
+    'h' : 'https://my.homeplus.co.kr/store/store_detail?storId={}',
     'c' : '',
     'g' : 'http://gsthefresh.gsretail.com/thefresh/ko/market-info/find-storelist?searchShopName={}',
 }
