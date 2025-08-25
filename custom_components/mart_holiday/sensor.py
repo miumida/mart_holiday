@@ -162,7 +162,7 @@ def ConvertLmartToComm(val):
         rslt = COMM_DATE_FORMAT.format(pYear, tmp[0], tmp[1])
         return rslt
     except Exception as ex:
-        _LOGGER.error('Failed to update ConvertLmartToComm() status Error: %s', ex)
+        _LOGGER.error(f'[{DOMAIN}] Failed to update ConvertLmartToComm() status Error: %s', ex)
 
     return val;
 
@@ -242,6 +242,9 @@ class martAPI:
             self.parseGSSuper( await self._get(url, True) )
         elif self._mart_kind == 'c':
             self.calcCostco()
+
+            if ( self.result[self._mart_code].get(ATTR_HOLIDATE) is None ):
+                self.calcCostco(None, None, True)
         else:
             self.parseLotte( await self._post(url) )
 
@@ -340,6 +343,8 @@ class martAPI:
     def parseHomeplus(self, html):
         dict = {}
 
+        #_LOGGER.error('parseHomeplus(html) Error: %s', html)
+
         soup = BeautifulSoup(html, 'html.parser')
         storeDetail = soup.find("dl", {"class": "shop_detail_01"})
 
@@ -430,7 +435,7 @@ class martAPI:
         self.result = dict
 
 
-    def calcCostco(self, year=None, month=None):
+    def calcCostco(self, year=None, month=None, next=False):
         """Update function for updating api information."""
         try:
             arr_holi = []
@@ -439,6 +444,13 @@ class martAPI:
 
             pYear  = dt.strftime("%Y") if year is None else year
             pMonth = dt.strftime("%m") if month is None else month
+
+            if next:
+                if int(pMonth) == 12:
+                    pMonth = "01"
+                    pYear  = str(int(pYear) + 1)
+                else:
+                    pMonth = str(int(pMonth) + 1)
 
             nowDt = dt.strftime("%d")
 
