@@ -341,17 +341,19 @@ class martAPI:
         dict = {}
 
         soup = BeautifulSoup(html, 'html.parser')
-        storeDetail = soup.find(id="store_detail01")
+        storeDetail = soup.find("dl", {"class": "shop_detail_01"})
 
-        tds = storeDetail.find_all("td")
+        dds = storeDetail.find_all("dd")
 
-        addr     = tds[0].get_text().strip()
-        holiday  = tds[1].get_text().strip()
-        tel      = tds[2].get_text().strip()
-        opertime = tds[3].get_text().strip()
+        opertime = dds[0].get_text().strip()
+        holiday  = dds[1].get_text().strip()
+        tel      = dds[2].get_text().strip()
+        addr     = dds[4].get_text().strip().replace("길 찾기", "")
+
+        day_off  = holiday
 
         #휴무일 추출 : 2019-03-24 형태의 값만 추출한다.
-        r = re.compile(r"\d{4}-\d{2}-\d{2}")
+        r = re.compile(r"\d{1,2}\/\d{1,2}")
 
         rtn = r.findall(holiday)
 
@@ -364,6 +366,7 @@ class martAPI:
             ATTR_TEL   : tel,
 
             ATTR_ADDR     : addr,
+            ATTR_DAYOFF   : day_off,
             ATTR_HOLIDAY  : holiday,
             ATTR_OPERTIME : opertime
         }
@@ -373,7 +376,7 @@ class martAPI:
         cnt = 1
         for tmp in rtn:
             dict[self._mart_code].update( {'holiday_{}'.format(str(cnt)):tmp} )
-            arr_holi.append(self.s2d(tmp))
+            arr_holi.append(self.s2d(ConvertLmartToComm(tmp)))
             cnt += 1
             
         dict[self._mart_code].update( {ATTR_HOLIDATE:self.get_next_holiday(arr_holi, True)} )
