@@ -103,11 +103,9 @@ E마트/롯데마트/Homeplus/Costco/GS슈퍼마켓의 휴무일을 나타내주
 <br><br>
 #### Homeplus
 - 홈플러스 매장명 찾기를 통해 원하는 홈플러스 매장을 검색한다<br>
-  매장명 검색 페이지 :  http://corporate.homeplus.co.kr/STORE/HyperMarket.aspx
-  ![homeplus_search_1](https://github.com/miumida/martholiday/blob/master/img/homeplus_search_1.png)<br>
-- 조회된 목록에서 하는 매장의 '입점 정보'를 클릭한다.
-- 매장정보가 나타나면 주소창에 있는 sn=0017 부분에서 = 뒤에 있는 `0017`을 마트코드로 사용한다.
-![homeplus_search_2](https://github.com/miumida/martholiday/blob/master/img/homeplus_search_2.png)<br>
+  매장명 검색 페이지 :  https://my.homeplus.co.kr/store<br>
+- 조회된 목록에서 원하는 매장의 '매장명'을 클릭한다.
+- 매장 정보가 나타나면 주소창에 있는 storId=595 부분에서 = 뒤에 있는 `595`을 마트코드로 사용한다.<br>
 <br><br>
 #### Costco
 |코드|마트명|코드|마트명|코드|마트명|
