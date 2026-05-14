@@ -17,6 +17,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.event import async_track_time_change
 
 from .const import DOMAIN, SW_VERSION, _COSTCO_STORES, CONF_MART_KIND, CONF_MART_CODE, CONF_NAME, CONF_AREA, MODEL, MANUFACT, _MART_KIND, _MART_URL, _MART_NAME, LMART_SEARCH_URL, EMART_IMSI_URL, LMART_BSE_URL, HOMEPLUS_BSE_URL, HOMEPLUS_EXPRESS_BSE_URL,GSSUPER_BSE_URL
 from .const import ATTR_NAME, ATTR_ID, ATTR_TEL, ATTR_ADDR, ATTR_HOLIDAY, ATTR_HOLIDAY_1, ATTR_HOLIDAY_2, ATTR_HOLIDAY_3, ATTR_HOLIDAY_4, ATTR_NEXT_HOLIDAY, ATTR_BUSSINESS_HOURS, ATTR_OPERTIME, ATTR_HOLIDATE, ATTR_DAYOFF, DEFAULT_MART_ALPHA_ICON
@@ -36,6 +38,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Add a entity from a config_entry."""
+    hass.data.setdefault(DOMAIN, {})
+    if config_entry.entry_id not in hass.data[DOMAIN]:
+        hass.data[DOMAIN][config_entry.entry_id] = []
+    
     mart_kind = config_entry.data[CONF_MART_KIND]
     mart_code = config_entry.data[CONF_MART_CODE]
     mart_name = config_entry.data[CONF_NAME]
@@ -49,11 +55,36 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
         mart = martSensor(api)
 
-        sensors += [mart]
+        sensors.append(mart)
     except Exception as ex:
         _LOGGER.error(f'[{DOMAIN}] Failed to update mart API status Error: %s', ex)
 
     async_add_entities(sensors, True)
+
+    hass.data[DOMAIN][config_entry.entry_id].extend(sensors)
+    
+    #_LOGGER.error("마트 센서 %d개 등록: %s", len(sensors), [s.entity_id for s in sensors])
+
+    @callback
+    def _handle_every_full_hour(now: datetime) -> None:
+        # 여기서 하고 싶은 작업 수행
+        #_LOGGER.error(f"[{DOMAIN}] 정시 트리거: %s", now)
+        # 예: 코디네이터 강제 갱신
+        # hass.async_create_task(coordinator.async_request_refresh())
+        sensors = hass.data[DOMAIN][config_entry.entry_id]
+
+        for sensor in sensors:
+            if sensor._mart_kind == 'c':
+                #_LOGGER.error(f"[{DOMAIN}] Costco 정시 트리거: %s, %s", now, sensor._mart_name)
+                hass.async_create_task(sensor.async_update())
+
+    # 매 시간 0분 0초에 실행
+    unsub = async_track_time_change(
+        hass,
+        _handle_every_full_hour,
+        minute=[0],
+        second=0,
+    )
 
 
 def viewState(val):
@@ -207,7 +238,7 @@ class martAPI:
 
         self._session   = async_get_clientsession(self._hass)
 
-        self._entity_id = generate_entity_id('mart_holiday.mart_{}', '{}_{}'.format(self._mart_kind, self._mart_code), hass= hass)
+        self._entity_id = generate_entity_id('sensor.mart_{}', '{}_{}'.format(self._mart_kind, self._mart_code), hass= hass)
 
         self.result = {}
 
@@ -621,7 +652,11 @@ class martSensor(Entity):
 
         self._holidate = marts_dict[self._mart_code].get(ATTR_HOLIDATE, '-')
 
+        marts_dict[self._mart_code]['syncdate'] = datetime.now()
+
         self.marts = marts_dict
+
+        self.async_write_ha_state()
 
     @property
     def extra_state_attributes (self):
